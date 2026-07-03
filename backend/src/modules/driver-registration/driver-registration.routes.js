@@ -1,8 +1,10 @@
 import { Router } from "express";
-import requireRole from "../../middlewares/require-role.middleware.js";
 
 import authenticate
     from "../../middlewares/authenticate.middleware.js";
+
+import requireRole
+    from "../../middlewares/require-role.middleware.js";
 
 import {
 
@@ -10,7 +12,7 @@ import {
 
     reviewRequest
 
-} from "./restaurant-registration.controller.js";
+} from "./driver-registration.controller.js";
 
 const router = Router();
 

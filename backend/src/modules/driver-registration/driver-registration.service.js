@@ -1,17 +1,20 @@
 import prisma from "../../config/prisma.js";
 
 import {
-    createRestaurantRequestSchema,
-    reviewRestaurantRequestSchema
-} from "./restaurant-registration.validation.js";
+
+    createDriverRequestSchema,
+
+    reviewDriverRequestSchema
+
+} from "./driver-registration.validation.js";
 
 export async function createRequest(userId, data) {
 
     const validatedData =
-        createRestaurantRequestSchema.parse(data);
+        createDriverRequestSchema.parse(data);
 
     const existingPending =
-        await prisma.restaurantRegistrationRequest.findFirst({
+        await prisma.driverRegistrationRequest.findFirst({
 
             where: {
 
@@ -31,7 +34,7 @@ export async function createRequest(userId, data) {
 
     }
 
-    return await prisma.restaurantRegistrationRequest.create({
+    return await prisma.driverRegistrationRequest.create({
 
         data: {
 
@@ -52,12 +55,12 @@ export async function reviewRequest(
 ) {
 
     const validatedData =
-        reviewRestaurantRequestSchema.parse(data);
+        reviewDriverRequestSchema.parse(data);
 
     return await prisma.$transaction(async (tx) => {
 
         const request =
-            await tx.restaurantRegistrationRequest.findUnique({
+            await tx.driverRegistrationRequest.findUnique({
 
                 where: {
 
@@ -80,7 +83,7 @@ export async function reviewRequest(
         }
 
         const updatedRequest =
-            await tx.restaurantRegistrationRequest.update({
+            await tx.driverRegistrationRequest.update({
 
                 where: {
 
@@ -104,54 +107,34 @@ export async function reviewRequest(
 
         if (validatedData.status === "APPROVED") {
 
-            console.log("========== APPROVING RESTAURANT ==========");
-            console.log(request);
+            await tx.driver.create({
 
-            const slug = request.restaurantName
-                .toLowerCase()
-                .trim()
-                .replace(/\s+/g, "-");
+                data: {
 
-            console.log("Creating restaurant...");
+                    userId: request.applicantId,
 
-            const restaurant =
-                await tx.restaurant.create({
+                    licensePlate: request.licensePlate
 
-                    data: {
+                }
 
-                        name: request.restaurantName,
+            });
 
-                        slug,
-
-                        phone: request.phone,
-
-                        address: request.address,
-
-                        description: request.description,
-
-                        managerId: request.applicantId
-
-                    }
-
-                });
-
-            console.log("Restaurant created:");
-            console.log(restaurant);
-
-            const managerRole =
+            const driverRole =
                 await tx.role.findUnique({
 
                     where: {
 
-                        name: "RestaurantManager"
+                        name: "Driver"
 
                     }
 
                 });
 
-            if (!managerRole) {
+            if (!driverRole) {
 
-                throw new Error("RestaurantManager role not found.");
+                throw new Error(
+                    "Driver role not found."
+                );
 
             }
 
@@ -162,7 +145,7 @@ export async function reviewRequest(
 
                         userId: request.applicantId,
 
-                        roleId: managerRole.id
+                        roleId: driverRole.id
 
                     }
 
@@ -176,21 +159,13 @@ export async function reviewRequest(
 
                         userId: request.applicantId,
 
-                        roleId: managerRole.id
+                        roleId: driverRole.id
 
                     }
 
                 });
 
-                console.log("RestaurantManager role assigned.");
-
-            } else {
-
-                console.log("User already has RestaurantManager role.");
-
             }
-
-            console.log("========== DONE ==========");
 
         }
 

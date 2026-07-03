@@ -1,24 +1,23 @@
-import * as service from "./restaurant-registration.service.js";
+import * as service from "./driver-registration.service.js";
 
 export async function createRequest(req, res, next) {
 
     try {
 
-        const request =
-            await service.createRequest(
+        const request = await service.createRequest(
 
-                req.user.id,
+            req.user.id,
 
-                req.body
+            req.body
 
-            );
+        );
 
         return res.status(201).json({
 
             success: true,
 
             message:
-                "Restaurant registration request submitted successfully.",
+                "Driver registration request submitted successfully.",
 
             data: request
 
@@ -52,7 +51,7 @@ export async function reviewRequest(req, res, next) {
 
             success: true,
 
-            message: "Restaurant request reviewed successfully.",
+            message: "Driver request reviewed successfully.",
 
             data: request
 
