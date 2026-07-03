@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+node_modules/
+
+.env
+
+src/generated/
+
+coverage/
+
+dist/
+
+.vscode/settings.json

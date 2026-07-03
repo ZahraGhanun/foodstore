@@ -1,0 +1,298 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                             String                          @id @default(uuid()) @db.Uuid
+  firstName                      String                          @db.VarChar(100)
+  lastName                       String                          @db.VarChar(100)
+  phone                          String                          @unique @db.VarChar(15)
+  email                          String?                         @unique @db.VarChar(100)
+  passwordHash                   String                          @db.VarChar(255)
+  isActive                       Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  cart                           Cart?
+  deliveryAddresses              DeliveryAddress[]
+  driver                         Driver?
+  driverRegistrationRequests     DriverRegistrationRequest[]     @relation("DriverApplicant")
+  reviewedDriverRequests         DriverRegistrationRequest[]     @relation("DriverReviewer")
+  orders                         Order[]
+  managedRestaurants             Restaurant[]                    @relation("RestaurantManager")
+  restaurantRegistrationRequests RestaurantRegistrationRequest[] @relation("Applicant")
+  reviewedRestaurantRequests     RestaurantRegistrationRequest[] @relation("Reviewer")
+  reviews                        Review[]
+  userRoles                      UserRole[]
+
+  @@map("User")
+}
+
+model Role {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique @db.VarChar(50)
+  description String?    @db.VarChar(255)
+  isActive    Boolean    @default(true)
+  userRoles   UserRole[]
+
+  @@map("Role")
+}
+
+model UserRole {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  roleId     Int
+  assignedAt DateTime @default(now())
+  role       Role     @relation(fields: [roleId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, roleId])
+  @@map("UserRole")
+}
+
+model RestaurantRegistrationRequest {
+  id             String        @id @default(uuid()) @db.Uuid
+  applicantId    String        @db.Uuid
+  restaurantName String        @db.VarChar(100)
+  phone          String        @db.VarChar(15)
+  address        String
+  description    String?       @db.VarChar(500)
+  status         RequestStatus @default(PENDING)
+  adminMessage   String?       @db.VarChar(500)
+  reviewedById   String?       @db.Uuid
+  createdAt      DateTime      @default(now())
+  reviewedAt     DateTime?
+  applicant      User          @relation("Applicant", fields: [applicantId], references: [id])
+  reviewedBy     User?         @relation("Reviewer", fields: [reviewedById], references: [id])
+
+  @@map("RestaurantRegistrationRequest")
+}
+
+model DriverRegistrationRequest {
+  id           String        @id @default(uuid()) @db.Uuid
+  applicantId  String        @db.Uuid
+  vehicleType  VehicleType
+  licensePlate String        @db.VarChar(20)
+  status       RequestStatus @default(PENDING)
+  adminMessage String?       @db.VarChar(500)
+  reviewedById String?       @db.Uuid
+  createdAt    DateTime      @default(now())
+  reviewedAt   DateTime?
+  applicant    User          @relation("DriverApplicant", fields: [applicantId], references: [id])
+  reviewedBy   User?         @relation("DriverReviewer", fields: [reviewedById], references: [id])
+
+  @@map("DriverRegistrationRequest")
+}
+
+model Restaurant {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String     @db.VarChar(100)
+  slug         String     @unique @db.VarChar(150)
+  description  String?    @db.VarChar(500)
+  logoUrl      String?
+  phone        String     @unique @db.VarChar(15)
+  address      String
+  minimumOrder Decimal    @default(0) @db.Decimal(10, 2)
+  deliveryFee  Decimal    @default(0) @db.Decimal(10, 2)
+  isActive     Boolean    @default(true)
+  avgRating    Decimal    @default(0) @db.Decimal(2, 1)
+  totalReviews Int        @default(0)
+  managerId    String     @db.Uuid
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  carts        Cart[]
+  categories   Category[]
+  foods        Food[]
+  orders       Order[]
+  manager      User       @relation("RestaurantManager", fields: [managerId], references: [id])
+  reviews      Review[]
+
+  @@map("Restaurant")
+}
+
+model Category {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String     @db.VarChar(100)
+  description  String?    @db.VarChar(255)
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+  restaurantId String     @db.Uuid
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  foods        Food[]
+
+  @@unique([restaurantId, name])
+  @@map("Category")
+}
+
+model Food {
+  id           String      @id @default(uuid()) @db.Uuid
+  name         String      @db.VarChar(150)
+  description  String?     @db.VarChar(500)
+  price        Decimal     @db.Decimal(10, 2)
+  imageUrl     String?
+  isAvailable  Boolean     @default(true)
+  isActive     Boolean     @default(true)
+  restaurantId String      @db.Uuid
+  categoryId   String      @db.Uuid
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  cartItems    CartItem[]
+  category     Category    @relation(fields: [categoryId], references: [id])
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
+  orderItems   OrderItem[]
+
+  @@map("Food")
+}
+
+model DeliveryAddress {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  title         String   @db.VarChar(50)
+  receiverName  String   @db.VarChar(100)
+  receiverPhone String   @db.VarChar(15)
+  address       String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+  orders        Order[]
+
+  @@map("DeliveryAddress")
+}
+
+model Cart {
+  id           String     @id @default(uuid()) @db.Uuid
+  userId       String     @unique @db.Uuid
+  restaurantId String     @db.Uuid
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+  cartItems    CartItem[]
+
+  @@map("Cart")
+}
+
+model CartItem {
+  id        String  @id @default(uuid()) @db.Uuid
+  cartId    String  @db.Uuid
+  foodId    String  @db.Uuid
+  quantity  Int     @default(1)
+  unitPrice Decimal @db.Decimal(10, 2)
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  food      Food    @relation(fields: [foodId], references: [id])
+
+  @@unique([cartId, foodId])
+  @@map("CartItem")
+}
+
+model Order {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @db.Uuid
+  restaurantId      String          @db.Uuid
+  deliveryAddressId String          @db.Uuid
+  status            OrderStatus     @default(PENDING)
+  totalPrice        Decimal         @db.Decimal(10, 2)
+  deliveryFee       Decimal         @db.Decimal(10, 2)
+  finalPrice        Decimal         @db.Decimal(10, 2)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  driverId          String?         @db.Uuid
+  deliveryAddress   DeliveryAddress @relation(fields: [deliveryAddressId], references: [id])
+  driver            Driver?         @relation(fields: [driverId], references: [id])
+  restaurant        Restaurant      @relation(fields: [restaurantId], references: [id])
+  user              User            @relation(fields: [userId], references: [id])
+  orderItems        OrderItem[]
+  payment           Payment?
+  review            Review?
+
+  @@map("Order")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid()) @db.Uuid
+  orderId   String  @db.Uuid
+  foodId    String  @db.Uuid
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  food      Food    @relation(fields: [foodId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id])
+
+  @@map("OrderItem")
+}
+
+model Driver {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @unique @db.Uuid
+  licensePlate String   @db.VarChar(20)
+  isAvailable  Boolean  @default(true)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id])
+  orders       Order[]
+
+  @@map("Driver")
+}
+
+model Payment {
+  id            String        @id @default(uuid()) @db.Uuid
+  orderId       String        @unique @db.Uuid
+  amount        Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @db.VarChar(100)
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@map("Payment")
+}
+
+model Review {
+  id           String     @id @default(uuid()) @db.Uuid
+  userId       String     @db.Uuid
+  restaurantId String     @db.Uuid
+  orderId      String     @unique @db.Uuid
+  rating       Int
+  comment      String?    @db.VarChar(1000)
+  createdAt    DateTime   @default(now())
+  order        Order      @relation(fields: [orderId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@map("Review")
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY_FOR_PICKUP
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
