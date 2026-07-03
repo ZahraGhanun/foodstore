@@ -6,6 +6,8 @@ import driverRegistrationRoutes from "./modules/driver-registration/driver-regis
 import foodRoutes
     from "./modules/food/food.routes.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
+import cartRoutes from "./modules/cart/cart.routes.js";
+import orderRoutes from "./modules/order/order.routes.js";
 
 const app = express();
 
@@ -22,8 +24,14 @@ app.use(
     "/api/driver-registration",
     driverRegistrationRoutes
 );
+
+
+app.use("/api/orders", orderRoutes);
+app.use("/api", cartRoutes);
 app.use("/api", foodRoutes);
 app.use("/api", categoryRoutes);
+
+
 // همیشه Error Middleware آخر باشد
 app.use(errorMiddleware);
 
