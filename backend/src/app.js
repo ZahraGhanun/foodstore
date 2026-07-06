@@ -8,9 +8,14 @@ import foodRoutes
 import errorMiddleware from "./middlewares/error.middleware.js";
 import cartRoutes from "./modules/cart/cart.routes.js";
 import orderRoutes from "./modules/order/order.routes.js";
+import restaurantRoutes from "./modules/restaurant/restaurant.routes.js";
+
+
+
+import cors from "cors";
 
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
@@ -30,6 +35,9 @@ app.use("/api/orders", orderRoutes);
 app.use("/api", cartRoutes);
 app.use("/api", foodRoutes);
 app.use("/api", categoryRoutes);
+app.use("/api", restaurantRoutes);
+
+
 
 
 // همیشه Error Middleware آخر باشد
