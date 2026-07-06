@@ -6,7 +6,8 @@ import config from "../../config/env.js";
 
 import {
     registerSchema,
-    loginSchema
+    loginSchema,
+    updateProfileSchema
 } from "./auth.validation.js";
 
 export async function register(userData) {
@@ -182,6 +183,44 @@ export async function login(data) {
             roles: user.userRoles.map(userRole => userRole.role.name)
 
         }
+
+    };
+
+}
+
+export async function updateProfile(userId, data) {
+
+    const validatedData = updateProfileSchema.parse(data);
+
+    const updatedUser = await prisma.user.update({
+
+        where: {
+            id: userId
+        },
+
+        data: {
+
+            firstName: validatedData.firstName,
+
+            lastName: validatedData.lastName,
+
+            email: validatedData.email
+
+        }
+
+    });
+
+    return {
+
+        id: updatedUser.id,
+
+        firstName: updatedUser.firstName,
+
+        lastName: updatedUser.lastName,
+
+        phone: updatedUser.phone,
+
+        email: updatedUser.email
 
     };
 

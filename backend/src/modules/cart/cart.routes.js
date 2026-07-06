@@ -5,6 +5,7 @@ import authenticate from "../../middlewares/authenticate.middleware.js";
 import {
     getCart,
     addToCart,
+    updateQuantity,
     removeItem,
     clearCart
 } from "./cart.controller.js";
@@ -21,6 +22,12 @@ router.post(
     "/cart/items",
     authenticate,
     addToCart
+);
+
+router.patch(
+    "/cart/items/:itemId",
+    authenticate,
+    updateQuantity
 );
 
 router.delete(

@@ -7,15 +7,14 @@ export async function getCart(req, res, next) {
         const cart = await service.getCart(req.user.id);
 
         return res.json({
-
             success: true,
             data: cart
-
         });
 
     } catch (error) {
         next(error);
     }
+
 }
 
 export async function addToCart(req, res, next) {
@@ -28,16 +27,47 @@ export async function addToCart(req, res, next) {
         );
 
         return res.status(201).json({
-
             success: true,
             message: "Item added to cart.",
             data: item
-
         });
 
     } catch (error) {
         next(error);
     }
+
+}
+
+export async function updateQuantity(req, res, next) {
+
+    try {
+
+        const item = await service.updateQuantity(
+
+            req.user.id,
+
+            req.params.itemId,
+
+            req.body.quantity
+
+        );
+
+        return res.json({
+
+            success: true,
+
+            message: "Quantity updated.",
+
+            data: item
+
+        });
+
+    } catch (error) {
+
+        next(error);
+
+    }
+
 }
 
 export async function removeItem(req, res, next) {
@@ -50,16 +80,17 @@ export async function removeItem(req, res, next) {
         );
 
         return res.json({
-
             success: true,
             message: "Item removed from cart."
-
         });
 
     } catch (error) {
         next(error);
     }
+
 }
+
+
 
 export async function clearCart(req, res, next) {
 
@@ -68,13 +99,12 @@ export async function clearCart(req, res, next) {
         await service.clearCart(req.user.id);
 
         return res.json({
-
             success: true,
             message: "Cart cleared."
-
         });
 
     } catch (error) {
         next(error);
     }
+
 }

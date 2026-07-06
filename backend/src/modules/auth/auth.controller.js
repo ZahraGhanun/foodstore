@@ -1,5 +1,9 @@
 import * as authService from "./auth.service.js";
-import { registerSchema } from "./auth.validation.js";
+import {
+    registerSchema,
+    updateProfileSchema
+} from "./auth.validation.js";
+
 
 export async function register(req, res, next) {
 
@@ -59,5 +63,39 @@ export async function me(req, res) {
         data: req.user
 
     });
+
+}
+
+export async function updateProfile(req, res, next) {
+
+    try {
+
+        const validatedData = updateProfileSchema.parse(req.body);
+
+        const user = await authService.updateProfile(
+
+            req.user.id,
+
+            validatedData
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            message: "Profile updated successfully.",
+
+            data: user
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
 
 }

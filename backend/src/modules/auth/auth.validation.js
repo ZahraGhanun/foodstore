@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
+
     firstName: z
         .string()
         .trim()
@@ -25,6 +26,7 @@ export const registerSchema = z.object({
         .string()
         .min(6, "Password must be at least 6 characters.")
         .max(72, "Password must be at most 72 characters.")
+
 });
 
 export const loginSchema = z.object({
@@ -37,5 +39,25 @@ export const loginSchema = z.object({
         .string()
         .min(6, "Password must be at least 6 characters.")
         .max(72, "Password must be at most 72 characters.")
+
+});
+
+export const updateProfileSchema = z.object({
+
+    firstName: z
+        .string()
+        .trim()
+        .min(2, "First name must be at least 2 characters.")
+        .max(50, "First name must be at most 50 characters."),
+
+    lastName: z
+        .string()
+        .trim()
+        .min(2, "Last name must be at least 2 characters.")
+        .max(50, "Last name must be at most 50 characters."),
+
+    email: z
+        .email("Email is not valid.")
+        .optional()
 
 });

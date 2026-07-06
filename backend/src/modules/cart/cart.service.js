@@ -162,3 +162,44 @@ export async function clearCart(userId) {
 
     return true;
 }
+
+
+export async function updateQuantity(userId, itemId, quantity) {
+
+    const cart = await prisma.cart.findUnique({
+        where: {
+            userId
+        }
+    });
+
+    if (!cart) {
+        throw new Error("Cart not found.");
+    }
+
+    const item = await prisma.cartItem.findUnique({
+        where: {
+            id: itemId
+        }
+    });
+
+    if (!item || item.cartId !== cart.id) {
+        throw new Error("Item not found.");
+    }
+
+    return prisma.cartItem.update({
+
+        where: {
+            id: itemId
+        },
+
+        data: {
+            quantity
+        },
+
+        include: {
+            food: true
+        }
+
+    });
+
+}

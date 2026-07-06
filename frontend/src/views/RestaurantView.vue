@@ -1,8 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-
-import FoodCard from "../components/FoodCard.vue";
+import { addToCart as addFoodToCart } from "../services/cart.service.js";import FoodCard from "../components/FoodCard.vue";
 import { getRestaurantById } from "../services/restaurant.service.js";
 
 const route = useRoute();
@@ -36,8 +35,20 @@ onMounted(async () => {
   }
 });
 
-function addToCart(food) {
-  console.log("Add To Cart:", food);
+async function addToCart(food) {
+
+  try {
+
+    await addFoodToCart(food.id);
+
+    alert(`${food.name} added to cart.`);
+
+  } catch (err) {
+
+    alert(err.message);
+
+  }
+
 }
 </script>
 
