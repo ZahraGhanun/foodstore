@@ -1,11 +1,14 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
 
 import {
   getCart,
   updateQuantity,
   removeItem
 } from "../services/cart.service.js";
+
+const router = useRouter();
 
 const cart = ref(null);
 const loading = ref(true);
@@ -79,6 +82,26 @@ const subtotal = computed(() => {
   }, 0);
 
 });
+
+const isCartEmpty = computed(() => {
+
+  return !cart.value || cart.value.cartItems.length === 0;
+
+});
+
+function checkout() {
+
+  if (isCartEmpty.value) return;
+
+  router.push("/checkout");
+
+}
+
+function browseRestaurants() {
+
+  router.push("/");
+
+}
 </script>
 
 <template>
@@ -99,17 +122,54 @@ const subtotal = computed(() => {
 
 </div>
 
-<div v-else-if="cart">
+<div v-else-if="isCartEmpty" class="empty-cart">
+
+<div class="emoji">
+
+🛒
+
+</div>
+
+<h2>Your cart is empty</h2>
+
+<p>
+
+Looks like you haven't added any food yet.
+
+</p>
+
+<button
+
+class="browse-btn"
+
+@click="browseRestaurants"
+
+>
+
+Browse Restaurants
+
+</button>
+
+</div>
+
+<div v-else>
 
 <div
+
 v-for="item in cart.cartItems"
+
 :key="item.id"
+
 class="item"
+
 >
 
 <img
+
 :src="item.food.imageUrl || 'https://picsum.photos/120'"
+
 alt="Food"
+
 />
 
 <div class="info">
@@ -129,13 +189,21 @@ alt="Food"
 <div class="quantity">
 
 <button @click="changeQuantity(item,-1)">
+
 −
+
 </button>
 
-<span>{{ item.quantity }}</span>
+<span>
+
+{{ item.quantity }}
+
+</span>
 
 <button @click="changeQuantity(item,1)">
+
 +
+
 </button>
 
 </div>
@@ -143,8 +211,11 @@ alt="Food"
 </div>
 
 <button
+
 class="delete-btn"
+
 @click="deleteItem(item.id)"
+
 >
 
 🗑
@@ -173,7 +244,13 @@ Subtotal
 
 </div>
 
-<button class="checkout">
+<button
+
+class="checkout"
+
+@click="checkout"
+
+>
 
 Proceed To Checkout
 
@@ -326,6 +403,78 @@ font-size:18px;
 font-weight:bold;
 
 cursor:pointer;
+
+transition:.2s;
+
+}
+
+.checkout:hover{
+
+background:#369f74;
+
+}
+
+.empty-cart{
+
+background:white;
+
+padding:70px 30px;
+
+border-radius:16px;
+
+text-align:center;
+
+box-shadow:0 2px 10px rgba(0,0,0,.08);
+
+}
+
+.emoji{
+
+font-size:70px;
+
+margin-bottom:15px;
+
+}
+
+.empty-cart h2{
+
+margin-bottom:10px;
+
+}
+
+.empty-cart p{
+
+color:#777;
+
+margin-bottom:30px;
+
+}
+
+.browse-btn{
+
+padding:16px 30px;
+
+border:none;
+
+border-radius:12px;
+
+background:#42b883;
+
+color:white;
+
+font-size:17px;
+
+font-weight:bold;
+
+cursor:pointer;
+
+transition:.2s;
+
+}
+
+.browse-btn:hover{
+
+background:#369f74;
 
 }
 

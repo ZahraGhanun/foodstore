@@ -6,7 +6,7 @@ import RestaurantView from "../views/RestaurantView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import CartView from "../views/CartView.vue";
 import ProfileView from "../views/ProfileView.vue";
-
+import CheckoutView from "../views/CheckoutView.vue";
 
 
 const router = createRouter({
@@ -14,7 +14,10 @@ const router = createRouter({
     history: createWebHistory(),
 
     routes: [
-
+        {
+            path: "/checkout",
+            component: CheckoutView
+        },
         {
             path: "/",
             component: HomeView

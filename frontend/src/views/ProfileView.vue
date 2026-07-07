@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
-
+import AddressList from "../components/AddressList.vue";
 import {
   getProfile,
   updateProfile
@@ -224,11 +224,9 @@ function cancelEdit() {
 
         <div v-if="activeTab==='addresses'">
 
-            <h1>Delivery Addresses</h1>
+    <AddressList />
 
-            <p>Coming Soon...</p>
-
-        </div>
+</div>
 
         <!-- ORDERS -->
 
