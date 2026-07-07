@@ -36,9 +36,11 @@ export async function createOrder(deliveryAddressId) {
 
 }
 
+// ---------- My Orders ----------
+
 export async function getMyOrders() {
 
-    const response = await fetch(API_URL + "/my", {
+    const response = await fetch(`${API_URL}/my`, {
 
         headers: {
 
@@ -60,7 +62,9 @@ export async function getMyOrders() {
 
 }
 
-export async function getOrder(id) {
+// ---------- Order Details ----------
+
+export async function getOrderById(id) {
 
     const response = await fetch(`${API_URL}/${id}`, {
 

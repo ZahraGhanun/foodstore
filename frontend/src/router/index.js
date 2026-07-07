@@ -7,13 +7,17 @@ import RegisterView from "../views/RegisterView.vue";
 import CartView from "../views/CartView.vue";
 import ProfileView from "../views/ProfileView.vue";
 import CheckoutView from "../views/CheckoutView.vue";
-
+import OrderDetailsView from "../views/OrderDetailsView.vue";
 
 const router = createRouter({
 
     history: createWebHistory(),
 
     routes: [
+        {
+            path: "/orders/:id",
+            component: OrderDetailsView
+        },
         {
             path: "/checkout",
             component: CheckoutView

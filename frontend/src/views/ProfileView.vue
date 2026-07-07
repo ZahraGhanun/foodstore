@@ -1,6 +1,9 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
+
 import AddressList from "../components/AddressList.vue";
+import OrdersList from "../components/OrdersList.vue";
+
 import {
   getProfile,
   updateProfile
@@ -32,11 +35,15 @@ async function loadProfile() {
     profile.phone = response.data.phone;
     profile.email = response.data.email || "";
 
-  } catch (err) {
+  }
+
+  catch (err) {
 
     alert(err.message);
 
-  } finally {
+  }
+
+  finally {
 
     loading.value = false;
 
@@ -62,7 +69,9 @@ async function saveProfile() {
 
     alert("Profile updated successfully.");
 
-  } catch (err) {
+  }
+
+  catch (err) {
 
     alert(err.message);
 
@@ -83,172 +92,239 @@ function cancelEdit() {
 
 <div class="container">
 
-    <aside class="sidebar">
+<aside class="sidebar">
 
-        <button
-            :class="{active:activeTab==='profile'}"
-            @click="activeTab='profile'"
-        >
-            👤 Personal Information
-        </button>
+<button
 
-        <button
-            :class="{active:activeTab==='addresses'}"
-            @click="activeTab='addresses'"
-        >
-            📍 Delivery Addresses
-        </button>
+:class="{active:activeTab==='profile'}"
 
-        <button
-            :class="{active:activeTab==='orders'}"
-            @click="activeTab='orders'"
-        >
-            📦 My Orders
-        </button>
+@click="activeTab='profile'"
 
-        <button
-            :class="{active:activeTab==='password'}"
-            @click="activeTab='password'"
-        >
-            🔒 Change Password
-        </button>
+>
 
-    </aside>
+👤 Personal Information
 
-    <section class="content">
+</button>
 
-        <!-- PROFILE -->
+<button
 
-        <div v-if="activeTab==='profile'">
+:class="{active:activeTab==='addresses'}"
 
-            <h1>Personal Information</h1>
+@click="activeTab='addresses'"
 
-            <div v-if="loading">
+>
 
-                Loading...
+📍 Delivery Addresses
 
-            </div>
+</button>
 
-            <div v-else>
+<button
 
-                <div class="field">
+:class="{active:activeTab==='orders'}"
 
-                    <label>First Name</label>
+@click="activeTab='orders'"
 
-                    <input
-                        v-if="editing"
-                        v-model="profile.firstName"
-                    >
+>
 
-                    <p v-else>
-                        {{ profile.firstName }}
-                    </p>
+📦 My Orders
 
-                </div>
+</button>
 
-                <div class="field">
+<button
 
-                    <label>Last Name</label>
+:class="{active:activeTab==='password'}"
 
-                    <input
-                        v-if="editing"
-                        v-model="profile.lastName"
-                    >
+@click="activeTab='password'"
 
-                    <p v-else>
-                        {{ profile.lastName }}
-                    </p>
+>
 
-                </div>
+🔒 Change Password
 
-                <div class="field">
+</button>
 
-                    <label>Phone</label>
+</aside>
 
-                    <p>
-                        {{ profile.phone }}
-                    </p>
+<section class="content">
 
-                </div>
+<!-- PROFILE -->
 
-                <div class="field">
+<div v-if="activeTab==='profile'">
 
-                    <label>Email</label>
+<h1>Personal Information</h1>
 
-                    <input
-                        v-if="editing"
-                        v-model="profile.email"
-                    >
+<div v-if="loading">
 
-                    <p v-else>
-                        {{ profile.email || "-" }}
-                    </p>
-
-                </div>
-
-                <div class="buttons">
-
-                    <button
-                        v-if="!editing"
-                        class="edit-btn"
-                        @click="editing=true"
-                    >
-                        Edit Profile
-                    </button>
-
-                    <template v-else>
-
-                        <button
-                            class="save-btn"
-                            @click="saveProfile"
-                        >
-                            Save
-                        </button>
-
-                        <button
-                            class="cancel-btn"
-                            @click="cancelEdit"
-                        >
-                            Cancel
-                        </button>
-
-                    </template>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- ADDRESSES -->
-
-        <div v-if="activeTab==='addresses'">
-
-    <AddressList />
+Loading...
 
 </div>
 
-        <!-- ORDERS -->
+<div v-else>
 
-        <div v-if="activeTab==='orders'">
+<div class="field">
 
-            <h1>My Orders</h1>
+<label>
 
-            <p>Coming Soon...</p>
+First Name
 
-        </div>
+</label>
 
-        <!-- PASSWORD -->
+<input
 
-        <div v-if="activeTab==='password'">
+v-if="editing"
 
-            <h1>Change Password</h1>
+v-model="profile.firstName"
 
-            <p>Coming Soon...</p>
+/>
 
-        </div>
+<p v-else>
 
-    </section>
+{{ profile.firstName }}
+
+</p>
+
+</div>
+
+<div class="field">
+
+<label>
+
+Last Name
+
+</label>
+
+<input
+
+v-if="editing"
+
+v-model="profile.lastName"
+
+/>
+
+<p v-else>
+
+{{ profile.lastName }}
+
+</p>
+
+</div>
+
+<div class="field">
+
+<label>
+
+Phone
+
+</label>
+
+<p>
+
+{{ profile.phone }}
+
+</p>
+
+</div>
+
+<div class="field">
+
+<label>
+
+Email
+
+</label>
+
+<input
+
+v-if="editing"
+
+v-model="profile.email"
+
+/>
+
+<p v-else>
+
+{{ profile.email || "-" }}
+
+</p>
+
+</div>
+
+<div class="buttons">
+
+<button
+
+v-if="!editing"
+
+class="edit-btn"
+
+@click="editing=true"
+
+>
+
+Edit Profile
+
+</button>
+
+<template v-else>
+
+<button
+
+class="save-btn"
+
+@click="saveProfile"
+
+>
+
+Save
+
+</button>
+
+<button
+
+class="cancel-btn"
+
+@click="cancelEdit"
+
+>
+
+Cancel
+
+</button>
+
+</template>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ADDRESSES -->
+
+<div v-if="activeTab==='addresses'">
+
+<AddressList />
+
+</div>
+
+<!-- ORDERS -->
+
+<div v-if="activeTab==='orders'">
+
+<OrdersList />
+
+</div>
+
+<!-- PASSWORD -->
+
+<div v-if="activeTab==='password'">
+
+<h1>Change Password</h1>
+
+<p>Coming Soon...</p>
+
+</div>
+
+</section>
 
 </div>
 
@@ -287,6 +363,13 @@ function cancelEdit() {
     background:#f5f5f5;
     text-align:left;
     font-size:15px;
+    transition:.2s;
+
+}
+
+.sidebar button:hover{
+
+    background:#ececec;
 
 }
 
@@ -327,6 +410,7 @@ function cancelEdit() {
     padding:12px;
     border:1px solid #ddd;
     border-radius:8px;
+    font-size:15px;
 
 }
 
@@ -355,6 +439,14 @@ function cancelEdit() {
     cursor:pointer;
     background:#42b883;
     color:white;
+    transition:.2s;
+
+}
+
+.edit-btn:hover,
+.save-btn:hover{
+
+    background:#369f74;
 
 }
 
@@ -366,6 +458,13 @@ function cancelEdit() {
     cursor:pointer;
     background:#999;
     color:white;
+    transition:.2s;
+
+}
+
+.cancel-btn:hover{
+
+    background:#777;
 
 }
 
