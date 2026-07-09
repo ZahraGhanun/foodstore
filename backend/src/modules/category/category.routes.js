@@ -1,5 +1,4 @@
 import { Router } from "express";
-
 import authenticate
     from "../../middlewares/authenticate.middleware.js";
 
@@ -8,13 +7,57 @@ import requireRole
 
 import {
 
+    getCategories,
     createCategory,
-
-    getCategories
+    createMyRestaurantCategory,
+    getMyCategories,
+    updateMyRestaurantCategory,
+    deleteMyRestaurantCategory
 
 } from "./category.controller.js";
 
 const router = Router();
+
+router.put(
+
+    "/restaurant/my-categories/:categoryId",
+
+    authenticate,
+
+    requireRole("RestaurantManager"),
+
+    updateMyRestaurantCategory
+
+);
+
+router.delete(
+
+    "/restaurant/my-categories/:categoryId",
+
+    authenticate,
+
+    requireRole("RestaurantManager"),
+
+    deleteMyRestaurantCategory
+
+);
+
+router.post(
+
+    "/restaurant/my-categories",
+
+    authenticate,
+
+    requireRole("RestaurantManager"),
+
+    createMyRestaurantCategory
+
+);
+router.get(
+    "/categories/my",
+    authenticate,
+    getMyCategories
+);
 
 router.post(
 

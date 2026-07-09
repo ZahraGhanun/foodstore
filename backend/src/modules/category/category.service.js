@@ -85,3 +85,177 @@ export async function getCategories(
     });
 
 }
+
+
+export async function getMyCategories(managerId) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    return prisma.category.findMany({
+
+        where: {
+
+            restaurantId: restaurant.id
+
+        },
+
+        orderBy: {
+
+            createdAt: "asc"
+
+        }
+
+    });
+
+}
+
+
+export async function createMyRestaurantCategory(userId, data) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    return await prisma.category.create({
+
+        data: {
+
+            name: data.name,
+
+            restaurantId: restaurant.id
+
+        }
+
+    });
+
+}
+
+
+export async function updateMyRestaurantCategory(userId, categoryId, data) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    const category = await prisma.category.findFirst({
+
+        where: {
+
+            id: categoryId,
+
+            restaurantId: restaurant.id
+
+        }
+
+    });
+
+    if (!category) {
+
+        throw new Error("Category not found.");
+
+    }
+
+    return await prisma.category.update({
+
+        where: {
+
+            id: categoryId
+
+        },
+
+        data: {
+
+            name: data.name
+
+        }
+
+    });
+
+}
+
+export async function deleteMyRestaurantCategory(userId, categoryId) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    const category = await prisma.category.findFirst({
+
+        where: {
+
+            id: categoryId,
+
+            restaurantId: restaurant.id
+
+        }
+
+    });
+
+    if (!category) {
+
+        throw new Error("Category not found.");
+
+    }
+
+    await prisma.category.delete({
+
+        where: {
+
+            id: categoryId
+
+        }
+
+    });
+
+}
+

@@ -11,7 +11,8 @@ import orderRoutes from "./modules/order/order.routes.js";
 import restaurantRoutes from "./modules/restaurant/restaurant.routes.js";
 import deliveryAddressRoutes
     from "./modules/delivery-address/delivery-address.routes.js";
-
+import restaurantDashboardRoutes
+    from "./modules/restaurant-dashboard/restaurant-dashboard.routes.js";
 
 import cors from "cors";
 
@@ -31,14 +32,16 @@ app.use(
     driverRegistrationRoutes
 );
 
-
+app.use(
+    "/api/restaurant-dashboard",
+    restaurantDashboardRoutes
+);
 app.use("/api/orders", orderRoutes);
 app.use("/api", cartRoutes);
 app.use("/api", foodRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", restaurantRoutes);
 app.use("/api/addresses", deliveryAddressRoutes);
-
 
 
 // همیشه Error Middleware آخر باشد

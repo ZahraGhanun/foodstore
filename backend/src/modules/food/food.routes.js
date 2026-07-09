@@ -6,16 +6,49 @@ import authenticate
 import requireRole
     from "../../middlewares/require-role.middleware.js";
 
+
 import {
 
     createFood,
-
-    getFoods
+    createMyRestaurantFood,
+    updateMyRestaurantFood,
+    deleteMyRestaurantFood,
+    getFoods,
+    getMyRestaurantFoods
 
 } from "./food.controller.js";
 
 const router = Router();
 
+router.put(
+
+    "/restaurant/my-foods/:foodId",
+
+    authenticate,
+
+    requireRole("RestaurantManager"),
+
+    updateMyRestaurantFood
+
+);
+
+router.post(
+
+    "/restaurant/my-foods",
+
+    authenticate,
+
+    requireRole("RestaurantManager"),
+
+    createMyRestaurantFood
+
+);
+
+router.get(
+    "/restaurant/my-foods",
+    authenticate,
+    getMyRestaurantFoods
+);
 router.post(
 
     "/restaurants/:restaurantId/foods",
@@ -33,6 +66,18 @@ router.get(
     "/restaurants/:restaurantId/foods",
 
     getFoods
+
+);
+
+router.delete(
+
+    "/restaurant/my-foods/:foodId",
+
+    authenticate,
+
+    requireRole("RestaurantManager"),
+
+    deleteMyRestaurantFood
 
 );
 

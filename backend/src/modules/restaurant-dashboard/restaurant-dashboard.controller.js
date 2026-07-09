@@ -1,0 +1,29 @@
+import * as service from "./restaurant-dashboard.service.js";
+
+export async function getDashboard(req, res, next) {
+
+    try {
+
+        const dashboard = await service.getDashboard(
+
+            req.user.id
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            data: dashboard
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}

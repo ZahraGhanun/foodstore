@@ -96,3 +96,204 @@ export async function getFoods(
     });
 
 }
+
+export async function getRestaurantFoods(managerId) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    return prisma.food.findMany({
+
+        where: {
+
+            restaurantId: restaurant.id
+
+        },
+
+        orderBy: {
+
+            createdAt: "desc"
+
+        }
+
+    });
+
+}
+export async function createMyRestaurantFood(userId, data) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    return await prisma.food.create({
+
+        data: {
+
+            name: data.name,
+
+            description: data.description,
+
+            price: Number(data.price),
+
+            imageUrl: data.imageUrl || null,
+
+            isActive: data.isActive,
+
+            restaurantId: restaurant.id,
+
+            categoryId: data.categoryId
+
+        },
+
+        include: {
+
+            category: true
+
+        }
+
+    });
+
+}
+
+export async function updateMyRestaurantFood(userId, foodId, data) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    const food = await prisma.food.findFirst({
+
+        where: {
+
+            id: foodId,
+
+            restaurantId: restaurant.id
+
+        }
+
+    });
+
+    if (!food) {
+
+        throw new Error("Food not found.");
+
+    }
+
+    return await prisma.food.update({
+
+        where: {
+
+            id: foodId
+
+        },
+
+        data: {
+
+            name: data.name,
+
+            description: data.description,
+
+            price: Number(data.price),
+
+            imageUrl: data.imageUrl || null,
+
+            categoryId: data.categoryId,
+
+            isActive: data.isActive
+
+        },
+
+        include: {
+
+            category: true
+
+        }
+
+    });
+
+}
+
+export async function deleteMyRestaurantFood(userId, foodId) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    const food = await prisma.food.findFirst({
+
+        where: {
+
+            id: foodId,
+
+            restaurantId: restaurant.id
+
+        }
+
+    });
+
+    if (!food) {
+
+        throw new Error("Food not found.");
+
+    }
+
+    await prisma.food.delete({
+
+        where: {
+
+            id: foodId
+
+        }
+
+    });
+
+}
