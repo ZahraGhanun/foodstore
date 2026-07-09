@@ -89,3 +89,68 @@ export async function getOrderById(req, res, next) {
     }
 
 }
+
+
+
+export async function getRestaurantOrders(req, res, next) {
+
+    try {
+
+        const orders = await service.getRestaurantOrders(
+
+            req.user.id
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            data: orders
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}
+
+export async function updateRestaurantOrderStatus(req, res, next) {
+
+    try {
+
+        const order = await service.updateRestaurantOrderStatus(
+
+            req.user.id,
+
+            req.params.orderId,
+
+            req.body.status
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            message: "Order status updated successfully.",
+
+            data: order
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}
+

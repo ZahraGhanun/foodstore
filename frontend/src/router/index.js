@@ -8,6 +8,14 @@ import CartView from "../views/CartView.vue";
 import ProfileView from "../views/ProfileView.vue";
 import CheckoutView from "../views/CheckoutView.vue";
 import OrderDetailsView from "../views/OrderDetailsView.vue";
+import RestaurantDashboardView
+    from "../views/RestaurantDashboardView.vue";
+import RestaurantFoodsView
+    from "../views/RestaurantFoodsView.vue";
+import RestaurantCategoriesView
+    from "../views/RestaurantCategoriesView.vue";
+import RestaurantOrdersView from "../views/RestaurantOrdersView.vue";
+
 
 const router = createRouter({
 
@@ -15,13 +23,35 @@ const router = createRouter({
 
     routes: [
         {
+            path: "/restaurant-dashboard/orders",
+            component: RestaurantOrdersView
+        },
+
+        {
+            path: "/restaurant-dashboard/categories",
+            component: RestaurantCategoriesView
+        },
+
+        {
+            path: "/restaurant-dashboard/foods",
+            component: RestaurantFoodsView
+        },
+
+        {
+            path: "/restaurant-dashboard",
+            component: RestaurantDashboardView
+        },
+
+        {
             path: "/orders/:id",
             component: OrderDetailsView
         },
+
         {
             path: "/checkout",
             component: CheckoutView
         },
+
         {
             path: "/",
             component: HomeView

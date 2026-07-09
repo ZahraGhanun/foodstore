@@ -7,14 +7,37 @@ import authenticate
 import {
 
     createOrder,
-
     getMyOrders,
-
-    getOrderById
+    getOrderById,
+    getRestaurantOrders,
+    updateRestaurantOrderStatus
 
 } from "./order.controller.js";
 
 const router = Router();
+
+
+router.get(
+
+    "/restaurant/my-orders",
+
+    authenticate,
+
+    getRestaurantOrders
+
+);
+
+router.patch(
+
+    "/restaurant/my-orders/:orderId",
+
+    authenticate,
+
+    updateRestaurantOrderStatus
+
+);
+
+
 router.get("/test", (req, res) => {
 
     res.json({

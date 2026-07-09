@@ -162,3 +162,120 @@ export async function getOrderById(userId, orderId) {
 
     return order;
 }
+
+
+export async function getRestaurantOrders(userId) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    return await prisma.order.findMany({
+
+        where: {
+
+            restaurantId: restaurant.id
+
+        },
+
+        include: {
+
+            user: true,
+
+            orderItems: {
+
+                include: {
+
+                    food: true
+
+                }
+
+            },
+
+            deliveryAddress: true
+
+        },
+
+        orderBy: {
+
+            createdAt: "desc"
+
+        }
+
+    });
+
+}
+
+export async function updateRestaurantOrderStatus(
+
+    userId,
+
+    orderId,
+
+    status
+
+) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+
+            managerId: userId
+
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    const order = await prisma.order.findFirst({
+
+        where: {
+
+            id: orderId,
+
+            restaurantId: restaurant.id
+
+        }
+
+    });
+
+    if (!order) {
+
+        throw new Error("Order not found.");
+
+    }
+
+    return await prisma.order.update({
+
+        where: {
+
+            id: orderId
+
+        },
+
+        data: {
+
+            status
+
+        }
+
+    });
+
+}

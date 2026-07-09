@@ -37,17 +37,17 @@
           </RouterLink>
         </li>
 
-<li>
+        <li v-if="isRestaurantManager">
+          <RouterLink to="/restaurant-dashboard">
+            🍕 Dashboard
+          </RouterLink>
+        </li>
 
-  <RouterLink to="/profile">
-
-    👤 {{ user.firstName }}
-
-  </RouterLink>
-
-</li>
-
-
+        <li>
+          <RouterLink to="/profile">
+            👤 {{ user.firstName }}
+          </RouterLink>
+        </li>
 
         <li>
           <button @click="logout">
@@ -63,7 +63,14 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { user, logout } from "../stores/auth.js";
+
+const isRestaurantManager = computed(() => {
+
+    return user.value?.roles?.includes("RestaurantManager");
+
+});
 </script>
 
 <style scoped>
@@ -72,11 +79,8 @@ import { user, logout } from "../stores/auth.js";
     display:flex;
     justify-content:space-between;
     align-items:center;
-
     padding:20px 60px;
-
     background:white;
-
     border-bottom:1px solid #e5e5e5;
 }
 
@@ -109,11 +113,6 @@ import { user, logout } from "../stores/auth.js";
 .router-link-active{
     color:#42b883;
     font-weight:bold;
-}
-
-.user{
-    font-weight:600;
-    color:#42b883;
 }
 
 button{
