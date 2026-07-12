@@ -1,20 +1,59 @@
 import { Router } from "express";
 
-
 import authenticate
     from "../../middlewares/authenticate.middleware.js";
 
+import requireRole
+    from "../../middlewares/require-role.middleware.js";
 import {
 
     createOrder,
+
     getMyOrders,
+
     getOrderById,
+
     getRestaurantOrders,
-    updateRestaurantOrderStatus
+
+    updateRestaurantOrderStatus,
+
+    getAvailableOrders,
+
+    acceptOrder,
+
+    getMyDeliveries,
+
+    deliverOrder
 
 } from "./order.controller.js";
 
 const router = Router();
+
+
+router.get(
+
+    "/driver/available-orders",
+
+    authenticate,
+
+    requireRole("Driver"),
+
+    getAvailableOrders
+
+);
+
+
+router.patch(
+
+    "/driver/orders/:id/accept",
+
+    authenticate,
+
+    requireRole("Driver"),
+
+    acceptOrder
+
+);
 
 
 router.get(
@@ -77,5 +116,31 @@ router.get(
     getOrderById
 
 );
+
+
+router.get(
+
+    "/driver/my-deliveries",
+
+    authenticate,
+
+    requireRole("Driver"),
+
+    getMyDeliveries
+
+);
+
+router.patch(
+
+    "/driver/orders/:id/deliver",
+
+    authenticate,
+
+    requireRole("Driver"),
+
+    deliverOrder
+
+);
+
 
 export default router;

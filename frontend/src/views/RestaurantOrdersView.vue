@@ -25,23 +25,20 @@ const error = ref("");
 const showDetails = ref(false);
 
 const selectedOrder = ref(null);
- 
-
 
 const statuses = [
 
     "PENDING",
 
+    "ACCEPTED",
+
     "PREPARING",
 
-    "ON_THE_WAY",
-
-    "DELIVERED",
+    "READY_FOR_PICKUP",
 
     "CANCELLED"
 
 ];
-
 
 function openDetails(order){
 

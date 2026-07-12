@@ -37,6 +37,12 @@
           </RouterLink>
         </li>
 
+        <li v-if="isDriver">
+  <RouterLink to="/driver-dashboard">
+    🚗 Driver Dashboard
+</RouterLink>
+</li>
+
         <li v-if="isRestaurantManager">
           <RouterLink to="/restaurant-dashboard">
             🍕 Dashboard
@@ -65,6 +71,12 @@
 <script setup>
 import { computed } from "vue";
 import { user, logout } from "../stores/auth.js";
+
+const isDriver = computed(() => {
+
+    return user.value?.roles?.includes("Driver");
+
+});
 
 const isRestaurantManager = computed(() => {
 

@@ -154,3 +154,123 @@ export async function updateRestaurantOrderStatus(req, res, next) {
 
 }
 
+
+export async function getAvailableOrders(req, res, next) {
+
+    try {
+
+        const orders = await service.getAvailableOrders();
+
+        return res.status(200).json({
+
+            success: true,
+
+            data: orders
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}
+
+
+
+
+export async function acceptOrder(req, res, next) {
+
+    try {
+
+        const order = await service.acceptOrder(
+
+            req.user.id,
+
+            req.params.id
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            message: "Order accepted successfully.",
+
+            data: order
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}
+
+
+export async function getMyDeliveries(req, res, next) {
+
+    try {
+
+        const deliveries = await service.getMyDeliveries(
+
+            req.user.id
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            data: deliveries
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}
+
+export async function deliverOrder(req, res, next) {
+
+    try {
+
+        const order = await service.deliverOrder(
+
+            req.user.id,
+
+            req.params.id
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            message: "Order delivered successfully.",
+
+            data: order
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}

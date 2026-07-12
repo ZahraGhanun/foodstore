@@ -279,3 +279,452 @@ export async function updateRestaurantOrderStatus(
     });
 
 }
+
+
+export async function getAvailableOrders() {
+
+    return prisma.order.findMany({
+
+        where: {
+
+            status: "READY_FOR_PICKUP",
+
+            driverId: null
+
+        },
+
+
+        include: {
+
+            user: {
+
+                select: {
+
+                    firstName: true,
+
+                    lastName: true,
+
+                    phone: true
+
+                }
+
+            },
+
+            restaurant: {
+
+                select: {
+
+                    id: true,
+
+                    name: true,
+
+                    phone: true,
+
+                    address: true
+
+                }
+
+            },
+
+            deliveryAddress: {
+
+                select: {
+
+                    title: true,
+
+                    receiverName: true,
+
+                    receiverPhone: true,
+
+                    address: true
+
+                }
+
+            },
+
+            orderItems: {
+
+                select: {
+
+                    quantity: true,
+
+                    unitPrice: true,
+
+                    food: {
+
+                        select: {
+
+                            id: true,
+
+                            name: true,
+
+                            imageUrl: true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        },
+
+
+
+        orderBy: {
+
+            createdAt: "asc"
+
+        }
+
+    });
+
+}
+
+
+
+export async function acceptOrder(driverUserId, orderId) {
+
+    const driver = await prisma.driver.findUnique({
+
+        where: {
+
+            userId: driverUserId
+
+        }
+
+    });
+
+    if (!driver) {
+
+        throw new Error("Driver not found.");
+
+    }
+
+    const order = await prisma.order.findUnique({
+
+        where: {
+
+            id: orderId
+
+        }
+
+    });
+
+    if (!order) {
+
+        throw new Error("Order not found.");
+
+    }
+
+    if (order.driverId) {
+
+        throw new Error("Order has already been accepted.");
+
+    }
+
+    if (order.status !== "READY_FOR_PICKUP") {
+
+        throw new Error("Order is not ready for pickup.");
+
+    }
+
+    return prisma.order.update({
+
+        where: {
+
+            id: orderId
+
+        },
+
+        data: {
+
+            driverId: driver.id,
+
+            status: "PICKED_UP"
+
+        },
+
+        include: {
+
+            restaurant: {
+
+                select: {
+
+                    id: true,
+
+                    name: true,
+
+                    phone: true,
+
+                    address: true
+
+                }
+
+            },
+
+            user: {
+
+                select: {
+
+                    firstName: true,
+
+                    lastName: true,
+
+                    phone: true
+
+                }
+
+            },
+
+            deliveryAddress: {
+
+                select: {
+
+                    title: true,
+
+                    receiverName: true,
+
+                    receiverPhone: true,
+
+                    address: true
+
+                }
+
+            },
+
+            orderItems: {
+
+                include: {
+
+                    food: {
+
+                        select: {
+
+                            name: true,
+
+                            imageUrl: true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
+
+
+export async function getMyDeliveries(driverUserId) {
+
+    const driver = await prisma.driver.findUnique({
+
+        where: {
+
+            userId: driverUserId
+
+        }
+
+    });
+
+    if (!driver) {
+
+        throw new Error("Driver not found.");
+
+    }
+
+    return prisma.order.findMany({
+
+        where: {
+
+            driverId: driver.id,
+
+            status: "PICKED_UP"
+
+        },
+
+        include: {
+
+            restaurant: {
+
+                select: {
+
+                    id: true,
+
+                    name: true,
+
+                    phone: true,
+
+                    address: true
+
+                }
+
+            },
+
+            user: {
+
+                select: {
+
+                    firstName: true,
+
+                    lastName: true,
+
+                    phone: true
+
+                }
+
+            },
+
+            deliveryAddress: {
+
+                select: {
+
+                    title: true,
+
+                    receiverName: true,
+
+                    receiverPhone: true,
+
+                    address: true
+
+                }
+
+            },
+
+            orderItems: {
+
+                select: {
+
+                    quantity: true,
+
+                    unitPrice: true,
+
+                    food: {
+
+                        select: {
+
+                            id: true,
+
+                            name: true,
+
+                            imageUrl: true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        },
+
+        orderBy: {
+
+            createdAt: "desc"
+
+        }
+
+    });
+
+}
+
+
+
+export async function deliverOrder(driverUserId, orderId) {
+
+    const driver = await prisma.driver.findUnique({
+
+        where: {
+
+            userId: driverUserId
+
+        }
+
+    });
+
+    if (!driver) {
+
+        throw new Error("Driver not found.");
+
+    }
+
+    const order = await prisma.order.findUnique({
+
+        where: {
+
+            id: orderId
+
+        }
+
+    });
+
+    if (!order) {
+
+        throw new Error("Order not found.");
+
+    }
+
+    if (order.driverId !== driver.id) {
+
+        throw new Error("Access denied.");
+
+    }
+
+    if (order.status !== "PICKED_UP") {
+
+        throw new Error("Order is not picked up.");
+
+    }
+
+    return prisma.order.update({
+
+        where: {
+
+            id: orderId
+
+        },
+
+        data: {
+
+            status: "DELIVERED"
+
+        },
+
+        include: {
+
+            restaurant: {
+
+                select: {
+
+                    name: true
+
+                }
+
+            },
+
+            user: {
+
+                select: {
+
+                    firstName: true,
+
+                    lastName: true,
+
+                    phone: true
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
