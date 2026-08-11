@@ -45,6 +45,48 @@ export async function createRequest(userId, data) {
 
 }
 
+export async function getPendingRequests() {
+
+    return prisma.restaurantRegistrationRequest.findMany({
+
+        where: {
+
+            status: "PENDING"
+
+        },
+
+        orderBy: {
+
+            createdAt: "asc"
+
+        },
+
+        include: {
+
+            applicant: {
+
+                select: {
+
+                    id: true,
+
+                    firstName: true,
+
+                    lastName: true,
+
+                    phone: true,
+
+                    email: true
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
+
 export async function reviewRequest(
     requestId,
     adminId,

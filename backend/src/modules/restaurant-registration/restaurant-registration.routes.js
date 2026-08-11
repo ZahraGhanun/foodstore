@@ -8,6 +8,8 @@ import {
 
     createRequest,
 
+    getPendingRequests,
+
     reviewRequest
 
 } from "./restaurant-registration.controller.js";
@@ -21,6 +23,18 @@ router.post(
     authenticate,
 
     createRequest
+
+);
+
+router.get(
+
+    "/pending",
+
+    authenticate,
+
+    requireRole("SystemAdmin"),
+
+    getPendingRequests
 
 );
 

@@ -67,3 +67,28 @@ export async function reviewRequest(req, res, next) {
     }
 
 }
+
+export async function getPendingRequests(req, res, next) {
+
+    try {
+
+        const requests =
+            await service.getPendingRequests();
+
+        return res.status(200).json({
+
+            success: true,
+
+            data: requests
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}

@@ -24,11 +24,18 @@ import RestaurantOrdersView
 import DriverDashboardView
     from "../views/DriverDashboardView.vue";
 
+import AdminDashboardView
+    from "../views/AdminDashboardView.vue";
+
 const router = createRouter({
 
     history: createWebHistory(),
 
     routes: [
+        {
+            path: "/admin-dashboard",
+            component: AdminDashboardView
+        },
 
         {
             path: "/",

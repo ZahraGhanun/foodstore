@@ -130,18 +130,6 @@ function cancelEdit() {
 
 </button>
 
-<button
-
-:class="{active:activeTab==='password'}"
-
-@click="activeTab='password'"
-
->
-
-🔒 Change Password
-
-</button>
-
 </aside>
 
 <section class="content">
@@ -314,15 +302,6 @@ Cancel
 
 </div>
 
-<!-- PASSWORD -->
-
-<div v-if="activeTab==='password'">
-
-<h1>Change Password</h1>
-
-<p>Coming Soon...</p>
-
-</div>
 
 </section>
 

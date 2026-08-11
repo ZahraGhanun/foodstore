@@ -34,3 +34,48 @@ export async function getRestaurantById(req, res, next) {
     }
 
 }
+
+export async function getAdminRestaurants(req, res, next) {
+
+    try {
+
+        const restaurants =
+            await service.getAdminRestaurants();
+
+        return res.json({
+
+            success: true,
+
+            data: restaurants
+
+        });
+
+    }
+    catch (error) {
+
+        next(error);
+
+    }
+
+}
+
+export async function deactivateRestaurant(req, res, next) {
+
+    try {
+
+        const restaurant =
+            await service.deactivateRestaurant(req.params.id);
+
+        return res.json({
+            success: true,
+            message: "Restaurant deactivated successfully.",
+            data: restaurant
+        });
+
+    } catch (error) {
+
+        next(error);
+
+    }
+
+}

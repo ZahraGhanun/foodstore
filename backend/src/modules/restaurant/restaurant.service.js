@@ -40,3 +40,35 @@ export async function getRestaurantById(id) {
 
     return restaurant;
 }
+
+export async function getAdminRestaurants() {
+
+    return prisma.restaurant.findMany({
+
+        orderBy: {
+
+            createdAt: "desc"
+
+        }
+
+    });
+
+}
+
+export async function deactivateRestaurant(id) {
+
+    const restaurant = await prisma.restaurant.findUnique({
+        where: { id }
+    });
+
+    if (!restaurant) {
+        throw new Error("Restaurant not found.");
+    }
+
+    return prisma.restaurant.update({
+        where: { id },
+        data: {
+            isActive: false
+        }
+    });
+}
