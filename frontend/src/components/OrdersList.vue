@@ -39,39 +39,128 @@ async function loadOrders() {
 
 }
 
+
 function openOrder(id) {
 
     router.push(`/orders/${id}`);
 
 }
 
-function statusColor(status) {
+
+/* =========================
+   Status Text
+========================= */
+
+function statusText(status) {
 
     switch (status) {
 
         case "PENDING":
+            return "Pending";
 
-            return "#f59e0b";
+        case "ACCEPTED":
+            return "Accepted";
 
         case "PREPARING":
+            return "Preparing";
 
-            return "#3b82f6";
+        case "READY_FOR_PICKUP":
+            return "Ready for Pickup";
+
+        case "PICKED_UP":
+            return "On the Way";
 
         case "ON_THE_WAY":
-
-            return "#10b981";
+            return "On the Way";
 
         case "DELIVERED":
-
-            return "#16a34a";
+            return "Delivered";
 
         case "CANCELLED":
-
-            return "#ef4444";
+            return "Cancelled";
 
         default:
+            return status;
 
-            return "#999";
+    }
+
+}
+
+
+/* =========================
+   Status Icon
+========================= */
+
+function statusIcon(status) {
+
+    switch (status) {
+
+        case "PENDING":
+            return "⏳";
+
+        case "ACCEPTED":
+            return "✅";
+
+        case "PREPARING":
+            return "👨‍🍳";
+
+        case "READY_FOR_PICKUP":
+            return "📦";
+
+        case "PICKED_UP":
+            return "🚚";
+
+        case "ON_THE_WAY":
+            return "🚚";
+
+        case "DELIVERED":
+            return "🎉";
+
+        case "CANCELLED":
+            return "❌";
+
+        default:
+            return "📋";
+
+    }
+
+}
+
+
+/* =========================
+   Status Class
+========================= */
+
+function statusClass(status) {
+
+    switch (status) {
+
+        case "PENDING":
+            return "pending";
+
+        case "ACCEPTED":
+            return "accepted";
+
+        case "PREPARING":
+            return "preparing";
+
+        case "READY_FOR_PICKUP":
+            return "ready";
+
+        case "PICKED_UP":
+            return "on-the-way";
+
+        case "ON_THE_WAY":
+            return "on-the-way";
+
+        case "DELIVERED":
+            return "delivered";
+
+        case "CANCELLED":
+            return "cancelled";
+
+        default:
+            return "default";
 
     }
 
@@ -79,169 +168,747 @@ function statusColor(status) {
 
 </script>
 
+
 <template>
 
-<div>
+<div class="orders-container">
 
-<h2>My Orders</h2>
 
-<div v-if="loading">
+    <!-- =========================
+         Header
+    ========================== -->
 
-Loading...
+    <div class="orders-header">
 
-</div>
+        <div>
 
-<div v-else-if="error">
+            <h2>
 
-{{ error }}
+                📦 My Orders
 
-</div>
+            </h2>
 
-<div
-v-else-if="orders.length===0"
->
+            <p>
 
-You have no orders yet.
+                View and track your previous orders.
 
-</div>
+            </p>
 
-<div
+        </div>
 
-v-for="order in orders"
+        <span class="order-count">
 
-:key="order.id"
+            {{ orders.length }}
 
-class="card"
+            Orders
 
->
+        </span>
 
-<div class="top">
+    </div>
 
-<div>
 
-<h3>
+    <!-- =========================
+         Loading
+    ========================== -->
 
-Order #{{ order.id.slice(0,8) }}
+    <div
+        v-if="loading"
+        class="message"
+    >
 
-</h3>
+        <span class="loading-icon">
 
-<p>
+            ⏳
 
-{{ new Date(order.createdAt).toLocaleString() }}
+        </span>
 
-</p>
+        Loading your orders...
 
-</div>
+    </div>
 
-<span
 
-class="status"
+    <!-- =========================
+         Error
+    ========================== -->
 
-:style="{
+    <div
+        v-else-if="error"
+        class="message error-message"
+    >
 
-background:statusColor(order.status)
+        ❌ {{ error }}
 
-}"
+    </div>
 
->
 
-{{ order.status }}
+    <!-- =========================
+         Empty
+    ========================== -->
 
-</span>
+    <div
+        v-else-if="orders.length === 0"
+        class="empty"
+    >
 
-</div>
+        <div class="empty-icon">
 
-<div class="bottom">
+            🛍️
 
-<strong>
+        </div>
 
-{{ Number(order.finalPrice).toLocaleString() }}
+        <h3>
 
-تومان
+            No Orders Yet
 
-</strong>
+        </h3>
 
-<button
+        <p>
 
-@click="openOrder(order.id)"
+            You haven't placed any orders yet.
 
->
+        </p>
 
-View Details
+    </div>
 
-</button>
 
-</div>
+    <!-- =========================
+         Orders
+    ========================== -->
 
-</div>
+    <div
+        v-else
+        class="orders"
+    >
+
+        <div
+            v-for="order in orders"
+            :key="order.id"
+            class="card"
+        >
+
+
+            <!-- =========================
+                 Top
+            ========================== -->
+
+            <div class="top">
+
+                <div class="order-info">
+
+                    <h3>
+
+                        📦 Order #{{ order.id.slice(0,8) }}
+
+                    </h3>
+
+                    <p>
+
+                        📅
+
+                        {{ new Date(order.createdAt).toLocaleString() }}
+
+                    </p>
+
+                </div>
+
+
+                <!-- =========================
+                     STATUS
+                ========================== -->
+
+                <div
+                    class="status"
+                    :class="statusClass(order.status)"
+                >
+
+                    <span class="status-icon">
+
+                        {{ statusIcon(order.status) }}
+
+                    </span>
+
+                    <span class="status-text">
+
+                        {{ statusText(order.status) }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 Divider
+            ========================== -->
+
+            <div class="divider"></div>
+
+
+            <!-- =========================
+                 Bottom
+            ========================== -->
+
+            <div class="bottom">
+
+
+                <div class="price">
+
+                    <span>
+
+                        Total
+
+                    </span>
+
+                    <strong>
+
+                        {{ Number(order.finalPrice).toLocaleString() }}
+
+                        <small>
+
+                            تومان
+
+                        </small>
+
+                    </strong>
+
+                </div>
+
+
+                <button
+                    class="details-btn"
+                    @click="openOrder(order.id)"
+                >
+
+                    👁
+
+                    View Details
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
 </template>
 
+
 <style scoped>
+
+/* =========================
+   Container
+========================= */
+
+.orders-container{
+
+    width:100%;
+
+}
+
+
+/* =========================
+   Header
+========================= */
+
+.orders-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+}
+
+.orders-header h2{
+
+    margin:0;
+
+    font-size:24px;
+
+    color:#222;
+
+}
+
+.orders-header p{
+
+    margin-top:7px;
+
+    color:#777;
+
+    font-size:14px;
+
+}
+
+.order-count{
+
+    background:#e8f8f1;
+
+    color:#42b883;
+
+    padding:8px 14px;
+
+    border-radius:20px;
+
+    font-size:14px;
+
+    font-weight:bold;
+
+}
+
+
+/* =========================
+   Orders
+========================= */
+
+.orders{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+}
+
+
+/* =========================
+   Card
+========================= */
 
 .card{
 
-padding:20px;
+    background:white;
 
-border-radius:12px;
+    border-radius:16px;
 
-background:white;
+    padding:22px;
 
-margin-bottom:18px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
 
-box-shadow:0 2px 10px rgba(0,0,0,.08);
+    transition:.2s;
 
 }
+
+.card:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 8px 22px rgba(0,0,0,.11);
+
+}
+
+
+/* =========================
+   Top
+========================= */
 
 .top{
 
-display:flex;
+    display:flex;
 
-justify-content:space-between;
+    justify-content:space-between;
 
-align-items:center;
+    align-items:center;
+
+    gap:20px;
+
+}
+
+.order-info h3{
+
+    margin:0 0 7px 0;
+
+    font-size:17px;
+
+    color:#222;
 
 }
 
-.bottom{
+.order-info p{
 
-display:flex;
+    margin:0;
 
-justify-content:space-between;
+    color:#888;
 
-align-items:center;
-
-margin-top:20px;
+    font-size:13px;
 
 }
+
+
+/* =========================
+   STATUS
+========================= */
 
 .status{
 
-padding:6px 12px;
+    display:flex;
 
-border-radius:20px;
+    align-items:center;
 
-color:white;
+    justify-content:center;
 
-font-size:13px;
+    gap:8px;
+
+    min-width:190px;
+
+    padding:11px 18px;
+
+    border-radius:30px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    white-space:nowrap;
 
 }
 
-button{
+.status-icon{
 
-padding:10px 16px;
+    font-size:18px;
 
-border:none;
+}
 
-border-radius:8px;
+.status-text{
 
-background:#42b883;
+    font-size:15px;
 
-color:white;
+}
 
-cursor:pointer;
+
+/* =========================
+   Pending
+========================= */
+
+.status.pending{
+
+    background:#fff4d6;
+
+    color:#b77900;
+
+}
+
+
+/* =========================
+   Accepted
+========================= */
+
+.status.accepted{
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+}
+
+
+/* =========================
+   Preparing
+========================= */
+
+.status.preparing{
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+}
+
+
+/* =========================
+   Ready For Pickup
+========================= */
+
+.status.ready{
+
+    background:#ede9fe;
+
+    color:#6d28d9;
+
+}
+
+
+/* =========================
+   On The Way
+========================= */
+
+.status.on-the-way{
+
+    background:#dff7ec;
+
+    color:#087443;
+
+}
+
+
+/* =========================
+   Delivered
+========================= */
+
+.status.delivered{
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+}
+
+
+/* =========================
+   Cancelled
+========================= */
+
+.status.cancelled{
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+}
+
+
+/* =========================
+   Default
+========================= */
+
+.status.default{
+
+    background:#f3f4f6;
+
+    color:#4b5563;
+
+}
+
+
+/* =========================
+   Divider
+========================= */
+
+.divider{
+
+    height:1px;
+
+    background:#eeeeee;
+
+    margin:18px 0;
+
+}
+
+
+/* =========================
+   Bottom
+========================= */
+
+.bottom{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.price{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+}
+
+.price span{
+
+    color:#888;
+
+    font-size:13px;
+
+}
+
+.price strong{
+
+    color:#42b883;
+
+    font-size:20px;
+
+}
+
+.price small{
+
+    font-size:12px;
+
+    font-weight:normal;
+
+}
+
+
+/* =========================
+   Details Button
+========================= */
+
+.details-btn{
+
+    padding:11px 18px;
+
+    border:none;
+
+    border-radius:9px;
+
+    background:#42b883;
+
+    color:white;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    font-weight:bold;
+
+    transition:.2s;
+
+}
+
+.details-btn:hover{
+
+    background:#369f74;
+
+    transform:translateY(-1px);
+
+}
+
+
+/* =========================
+   Empty
+========================= */
+
+.empty{
+
+    background:#fff;
+
+    border-radius:16px;
+
+    padding:60px 20px;
+
+    text-align:center;
+
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+
+}
+
+.empty-icon{
+
+    font-size:55px;
+
+    margin-bottom:15px;
+
+}
+
+.empty h3{
+
+    margin-bottom:8px;
+
+    color:#333;
+
+}
+
+.empty p{
+
+    color:#888;
+
+}
+
+
+/* =========================
+   Messages
+========================= */
+
+.message{
+
+    background:white;
+
+    border-radius:16px;
+
+    padding:40px;
+
+    text-align:center;
+
+    color:#777;
+
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+
+}
+
+.loading-icon{
+
+    font-size:22px;
+
+    margin-right:8px;
+
+}
+
+.error-message{
+
+    color:#dc2626;
+
+    background:#fff5f5;
+
+}
+
+
+/* =========================
+   Mobile
+========================= */
+
+@media(max-width:650px){
+
+    .orders-header{
+
+        align-items:flex-start;
+
+        gap:15px;
+
+    }
+
+    .top{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+    .status{
+
+        width:100%;
+
+        box-sizing:border-box;
+
+    }
+
+    .bottom{
+
+        flex-direction:column;
+
+        align-items:stretch;
+
+        gap:15px;
+
+    }
+
+    .details-btn{
+
+        width:100%;
+
+    }
 
 }
 

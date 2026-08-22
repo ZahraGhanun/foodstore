@@ -1,8 +1,11 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 
 import RestaurantCard from "../components/RestaurantCard.vue";
 import { getRestaurants } from "../services/restaurant.service.js";
+
+const router = useRouter();
 
 const restaurants = ref([]);
 
@@ -14,6 +17,14 @@ onMounted(async () => {
     console.error(error);
   }
 });
+
+const goToDriverRegister = () => {
+  router.push("/driver-register");
+};
+
+const goToRestaurantRegister = () => {
+  router.push("/restaurant-register");
+};
 </script>
 
 <template>
@@ -22,7 +33,19 @@ onMounted(async () => {
 
     <p>Fast delivery from the best restaurants in your city.</p>
 
-    <button>Order Now</button>
+    <div class="hero-actions">
+  <button @click="router.push('/restaurants')">
+    Order Now
+  </button>
+
+  <button @click="goToDriverRegister">
+    Register as Driver
+  </button>
+
+  <button @click="goToRestaurantRegister">
+    Register Your Restaurant
+  </button>
+</div>
   </section>
 
   <section class="restaurants">
@@ -49,5 +72,12 @@ onMounted(async () => {
   gap: 30px;
   flex-wrap: wrap;
   margin: 60px 0;
+}
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 25px;
 }
 </style>

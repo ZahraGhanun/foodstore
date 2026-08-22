@@ -1,17 +1,13 @@
-
 <script setup>
+
 import { ref, onMounted } from "vue";
 
 import {
-
     getRestaurantOrders,
     updateOrderStatus
-
 } from "../services/restaurant-order.service.js";
 
-
 import OrderDetailsModal
-
     from "../components/OrderDetailsModal.vue";
 
 
@@ -21,10 +17,10 @@ const loading = ref(true);
 
 const error = ref("");
 
- 
 const showDetails = ref(false);
 
 const selectedOrder = ref(null);
+
 
 const statuses = [
 
@@ -40,18 +36,9 @@ const statuses = [
 
 ];
 
-function openDetails(order){
-
-    selectedOrder.value = order;
-
-    showDetails.value = true;
-
-}
-
-
-
 
 onMounted(loadOrders);
+
 
 async function loadOrders() {
 
@@ -61,15 +48,18 @@ async function loadOrders() {
 
     try {
 
-        const response = await getRestaurantOrders();
+        const response =
+            await getRestaurantOrders();
 
-        orders.value = response.data;
+        orders.value =
+            response.data;
 
     }
 
     catch (err) {
 
-        error.value = err.message;
+        error.value =
+            err.message;
 
     }
 
@@ -82,9 +72,9 @@ async function loadOrders() {
 }
 
 
-async function changeStatus(order){
+async function changeStatus(order) {
 
-    try{
+    try {
 
         await updateOrderStatus(
 
@@ -98,7 +88,7 @@ async function changeStatus(order){
 
     }
 
-    catch(err){
+    catch (err) {
 
         alert(err.message);
 
@@ -107,43 +97,108 @@ async function changeStatus(order){
 }
 
 
-function statusColor(status) {
+function openDetails(order) {
+
+    selectedOrder.value =
+        order;
+
+    showDetails.value =
+        true;
+
+}
+
+
+function statusLabel(status) {
 
     switch (status) {
 
         case "PENDING":
+            return "Pending";
 
-            return "#f59e0b";
+        case "ACCEPTED":
+            return "Accepted";
 
         case "PREPARING":
+            return "Preparing";
 
-            return "#3b82f6";
-
-        case "ON_THE_WAY":
-
-            return "#8b5cf6";
-
-        case "DELIVERED":
-
-            return "#10b981";
+        case "READY_FOR_PICKUP":
+            return "Ready for Pickup";
 
         case "CANCELLED":
-
-            return "#ef4444";
+            return "Cancelled";
 
         default:
-
-            return "#6b7280";
+            return status;
 
     }
 
 }
+
+
+function statusClass(status) {
+
+    switch (status) {
+
+        case "PENDING":
+            return "pending";
+
+        case "ACCEPTED":
+            return "accepted";
+
+        case "PREPARING":
+            return "preparing";
+
+        case "READY_FOR_PICKUP":
+            return "ready";
+
+        case "CANCELLED":
+            return "cancelled";
+
+        default:
+            return "unknown";
+
+    }
+
+}
+
+
+function statusIcon(status) {
+
+    switch (status) {
+
+        case "PENDING":
+            return "⏳";
+
+        case "ACCEPTED":
+            return "✅";
+
+        case "PREPARING":
+            return "👨‍🍳";
+
+        case "READY_FOR_PICKUP":
+            return "📦";
+
+        case "CANCELLED":
+            return "❌";
+
+        default:
+            return "📋";
+
+    }
+
+}
+
 </script>
- 
+
 
 <template>
 
 <div class="container">
+
+
+    <!-- ========================= -->
+    <!-- HEADER -->
+    <!-- ========================= -->
 
     <div class="header">
 
@@ -155,7 +210,7 @@ function statusColor(status) {
 
                 <span class="count">
 
-                    ({{ orders.length }})
+                    {{ orders.length }}
 
                 </span>
 
@@ -169,6 +224,7 @@ function statusColor(status) {
 
         </div>
 
+
         <button
             class="refresh-btn"
             @click="loadOrders"
@@ -180,31 +236,95 @@ function statusColor(status) {
 
     </div>
 
-    <div v-if="loading">
 
-        Loading...
+
+    <!-- ========================= -->
+    <!-- LOADING -->
+    <!-- ========================= -->
+
+    <div
+        v-if="loading"
+        class="loading"
+    >
+
+        <div class="loading-icon">
+
+            📦
+
+        </div>
+
+        <p>
+
+            Loading orders...
+
+        </p>
 
     </div>
 
-    <div v-else-if="error">
+
+
+    <!-- ========================= -->
+    <!-- ERROR -->
+    <!-- ========================= -->
+
+    <div
+        v-else-if="error"
+        class="error"
+    >
+
+        <span>
+
+            ⚠️
+
+        </span>
 
         {{ error }}
 
     </div>
+
+
+
+    <!-- ========================= -->
+    <!-- EMPTY -->
+    <!-- ========================= -->
 
     <div
         v-else-if="orders.length === 0"
         class="empty"
     >
 
-        No orders found.
+        <div class="empty-icon">
+
+            📦
+
+        </div>
+
+        <h2>
+
+            No Orders Yet
+
+        </h2>
+
+        <p>
+
+            When customers place orders,
+            they will appear here.
+
+        </p>
 
     </div>
+
+
+
+    <!-- ========================= -->
+    <!-- ORDERS -->
+    <!-- ========================= -->
 
     <div
         v-else
         class="orders"
     >
+
 
         <div
             v-for="order in orders"
@@ -212,112 +332,272 @@ function statusColor(status) {
             class="card"
         >
 
+
+            <!-- ORDER INFORMATION -->
+
             <div class="info">
 
-                <h2>
 
-                    📦 Order #{{ order.id.slice(0,8) }}
+                <div class="order-title">
 
-                </h2>
+                    <div class="order-icon">
 
-                <p>
+                        📦
 
-                    👤
+                    </div>
 
-                    {{ order.user.firstName }}
+                    <div>
 
-                    {{ order.user.lastName }}
+                        <h2>
 
-                </p>
+                            Order #{{ order.id.slice(0,8) }}
 
-                <p>
+                        </h2>
 
-                    📞
+                        <span class="order-date">
 
-                    {{ order.user.phone }}
+                            {{
+                                new Date(
+                                    order.createdAt
+                                ).toLocaleString()
+                            }}
 
-                </p>
+                        </span>
 
-                <p>
+                    </div>
 
-                    📅
+                </div>
 
-                    {{ new Date(order.createdAt).toLocaleString() }}
 
-                </p>
+                <div class="details">
 
-                <p>
 
-                    🍔
+                    <div class="detail">
 
-                    {{ order.orderItems.length }}
+                        <span class="detail-icon">
 
-                    Foods
+                            👤
 
-                </p>
+                        </span>
 
-                <strong>
+                        <div>
 
-                    💰
+                            <small>
 
-                    {{ Number(order.finalPrice).toLocaleString() }}
+                                Customer
 
-                    تومان
+                            </small>
 
-                </strong>
+                            <p>
+
+                                {{ order.user.firstName }}
+
+                                {{ order.user.lastName }}
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="detail">
+
+                        <span class="detail-icon">
+
+                            📞
+
+                        </span>
+
+                        <div>
+
+                            <small>
+
+                                Phone
+
+                            </small>
+
+                            <p>
+
+                                {{ order.user.phone }}
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="detail">
+
+                        <span class="detail-icon">
+
+                            🍔
+
+                        </span>
+
+                        <div>
+
+                            <small>
+
+                                Items
+
+                            </small>
+
+                            <p>
+
+                                {{ order.orderItems.length }}
+
+                                Foods
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="price">
+
+                    <span>
+
+                        Total
+
+                    </span>
+
+                    <strong>
+
+                        💰
+
+                        {{
+                            Number(
+                                order.finalPrice
+                            ).toLocaleString()
+                        }}
+
+                        تومان
+
+                    </strong>
+
+                </div>
+
 
             </div>
+
+
+
+            <!-- ========================= -->
+            <!-- RIGHT SIDE -->
+            <!-- ========================= -->
 
             <div class="right">
 
-                <select
-                    v-model="order.status"
-                    class="status-select"
+
+                <!-- CURRENT STATUS -->
+
+                <div
+                    class="status-badge"
+                    :class="
+                        statusClass(order.status)
+                    "
                 >
 
-                    <option
-                        v-for="status in statuses"
-                        :key="status"
-                        :value="status"
+                    <span>
+
+                        {{ statusIcon(order.status) }}
+
+                    </span>
+
+                    {{ statusLabel(order.status) }}
+
+                </div>
+
+
+
+                <!-- CHANGE STATUS -->
+
+                <div class="status-control">
+
+                    <label>
+
+                        Change Status
+
+                    </label>
+
+
+                    <select
+                        v-model="order.status"
+                        class="status-select"
+                        :class="
+                            statusClass(order.status)
+                        "
                     >
 
-                        {{ status }}
+                        <option
+                            v-for="status in statuses"
+                            :key="status"
+                            :value="status"
+                        >
 
-                    </option>
+                            {{ statusIcon(status) }}
 
-                </select>
+                            {{ statusLabel(status) }}
 
-          
-<button
+                        </option>
 
-    class="details-btn"
+                    </select>
 
-    @click="openDetails(order)"
-
->
-
-    👁 Details
-
-</button>
+                </div>
 
 
 
-                <button
-                    class="change-btn"
-                    @click="changeStatus(order)"
-                >
+                <!-- BUTTONS -->
 
-                    💾 Update
+                <div class="buttons">
 
-                </button>
+
+                    <button
+                        class="details-btn"
+                        @click="
+                            openDetails(order)
+                        "
+                    >
+
+                        👁 Details
+
+                    </button>
+
+
+                    <button
+                        class="change-btn"
+                        @click="
+                            changeStatus(order)
+                        "
+                    >
+
+                        💾 Update
+
+                    </button>
+
+
+                </div>
+
 
             </div>
 
+
         </div>
+
 
     </div>
 
 </div>
+
 
 
 <OrderDetailsModal
@@ -328,37 +608,15 @@ function statusColor(status) {
 
 />
 
-
-
 </template>
 
 
 <style scoped>
 
-.details-btn{
 
-    border:none;
-
-    padding:10px 16px;
-
-    border-radius:8px;
-
-    background:#6b7280;
-
-    color:white;
-
-    cursor:pointer;
-
-    font-weight:bold;
-
-}
-
-.details-btn:hover{
-
-    background:#4b5563;
-
-}
-
+/* ========================= */
+/* CONTAINER */
+/* ========================= */
 
 .container{
 
@@ -367,6 +625,12 @@ function statusColor(status) {
     margin:40px auto;
 
 }
+
+
+
+/* ========================= */
+/* HEADER */
+/* ========================= */
 
 .header{
 
@@ -380,6 +644,16 @@ function statusColor(status) {
 
 }
 
+
+.header h1{
+
+    margin:0;
+
+    font-size:28px;
+
+}
+
+
 .header p{
 
     color:#666;
@@ -388,17 +662,44 @@ function statusColor(status) {
 
 }
 
+
 .count{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:30px;
+
+    height:30px;
+
+    padding:0 8px;
+
+    margin-left:8px;
+
+    border-radius:20px;
+
+    background:#e8f8f1;
 
     color:#42b883;
 
+    font-size:15px;
+
 }
+
+
+
+/* ========================= */
+/* REFRESH */
+/* ========================= */
 
 .refresh-btn{
 
     border:none;
 
-    padding:12px 20px;
+    padding:11px 18px;
 
     border-radius:10px;
 
@@ -410,7 +711,24 @@ function statusColor(status) {
 
     font-weight:bold;
 
+    transition:.2s;
+
 }
+
+
+.refresh-btn:hover{
+
+    background:#369f74;
+
+    transform:translateY(-2px);
+
+}
+
+
+
+/* ========================= */
+/* ORDERS */
+/* ========================= */
 
 .orders{
 
@@ -418,53 +736,206 @@ function statusColor(status) {
 
     flex-direction:column;
 
-    gap:20px;
+    gap:18px;
 
 }
+
+
+
+/* ========================= */
+/* CARD */
+/* ========================= */
 
 .card{
 
     background:white;
 
-    border-radius:16px;
+    border-radius:18px;
 
-    padding:22px;
+    padding:24px;
 
     display:flex;
 
     justify-content:space-between;
 
-    align-items:center;
+    gap:30px;
 
-    box-shadow:0 2px 10px rgba(0,0,0,.08);
+    box-shadow:
+
+        0 2px 10px rgba(0,0,0,.06);
+
+    border:1px solid #f0f0f0;
 
     transition:.2s;
 
 }
 
+
 .card:hover{
 
     transform:translateY(-3px);
 
-    box-shadow:0 8px 20px rgba(0,0,0,.12);
+    box-shadow:
+
+        0 10px 25px rgba(0,0,0,.10);
 
 }
 
-.info h2{
 
-    margin-bottom:10px;
 
-}
+/* ========================= */
+/* INFO */
+/* ========================= */
 
-.info p{
+.info{
 
-    color:#666;
-
-    margin-bottom:8px;
+    flex:1;
 
 }
 
-.info strong{
+
+.order-title{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    margin-bottom:22px;
+
+}
+
+
+.order-icon{
+
+    width:48px;
+
+    height:48px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:12px;
+
+    background:#f1f8f5;
+
+    font-size:25px;
+
+}
+
+
+.order-title h2{
+
+    margin:0 0 5px;
+
+    font-size:19px;
+
+}
+
+
+.order-date{
+
+    color:#999;
+
+    font-size:13px;
+
+}
+
+
+
+/* ========================= */
+/* DETAILS */
+/* ========================= */
+
+.details{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:25px;
+
+    margin-bottom:20px;
+
+}
+
+
+.detail{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:9px;
+
+}
+
+
+.detail-icon{
+
+    font-size:20px;
+
+}
+
+
+.detail small{
+
+    display:block;
+
+    color:#999;
+
+    font-size:11px;
+
+    margin-bottom:3px;
+
+}
+
+
+.detail p{
+
+    margin:0;
+
+    color:#444;
+
+    font-size:14px;
+
+}
+
+
+
+/* ========================= */
+/* PRICE */
+/* ========================= */
+
+.price{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    padding-top:15px;
+
+    border-top:1px solid #eee;
+
+}
+
+
+.price span{
+
+    color:#888;
+
+    font-size:14px;
+
+}
+
+
+.price strong{
 
     color:#42b883;
 
@@ -472,39 +943,203 @@ function statusColor(status) {
 
 }
 
+
+
+/* ========================= */
+/* RIGHT */
+/* ========================= */
+
 .right{
+
+    width:220px;
 
     display:flex;
 
     flex-direction:column;
 
-    gap:12px;
+    gap:14px;
 
-    align-items:flex-end;
+    align-items:stretch;
 
 }
 
-.status{
 
-    color:white;
 
-    padding:8px 16px;
+/* ========================= */
+/* STATUS BADGE */
+/* ========================= */
 
-    border-radius:20px;
+.status-badge{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:7px;
+
+    padding:10px 15px;
+
+    border-radius:25px;
+
+    font-weight:bold;
+
+    font-size:14px;
+
+}
+
+
+
+/* Pending */
+
+.status-badge.pending{
+
+    background:#fff7ed;
+
+    color:#c2410c;
+
+}
+
+
+/* Accepted */
+
+.status-badge.accepted{
+
+    background:#ecfdf5;
+
+    color:#047857;
+
+}
+
+
+/* Preparing */
+
+.status-badge.preparing{
+
+    background:#eff6ff;
+
+    color:#1d4ed8;
+
+}
+
+
+/* Ready */
+
+.status-badge.ready{
+
+    background:#f5f3ff;
+
+    color:#6d28d9;
+
+}
+
+
+/* Cancelled */
+
+.status-badge.cancelled{
+
+    background:#fef2f2;
+
+    color:#dc2626;
+
+}
+
+
+.status-badge.unknown{
+
+    background:#f3f4f6;
+
+    color:#4b5563;
+
+}
+
+
+
+/* ========================= */
+/* STATUS CONTROL */
+/* ========================= */
+
+.status-control{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+}
+
+
+.status-control label{
+
+    color:#888;
+
+    font-size:12px;
 
     font-weight:bold;
 
 }
 
+
+.status-select{
+
+    width:100%;
+
+    padding:11px 12px;
+
+    border-radius:10px;
+
+    border:1px solid #ddd;
+
+    background:white;
+
+    font-size:14px;
+
+    cursor:pointer;
+
+    outline:none;
+
+    transition:.2s;
+
+}
+
+
+.status-select:focus{
+
+    border-color:#42b883;
+
+    box-shadow:
+
+        0 0 0 3px rgba(66,184,131,.12);
+
+}
+
+
+
+/* ========================= */
+/* BUTTONS */
+/* ========================= */
+
+.buttons{
+
+    display:flex;
+
+    gap:8px;
+
+}
+
+
+.details-btn,
 .change-btn{
+
+    flex:1;
 
     border:none;
 
-    padding:10px 16px;
+    padding:10px 12px;
 
-    border-radius:8px;
-
-    background:#3b82f6;
+    border-radius:9px;
 
     color:white;
 
@@ -512,58 +1147,202 @@ function statusColor(status) {
 
     font-weight:bold;
 
+    transition:.2s;
+
 }
+
+
+.details-btn{
+
+    background:#6b7280;
+
+}
+
+
+.details-btn:hover{
+
+    background:#4b5563;
+
+}
+
+
+.change-btn{
+
+    background:#42b883;
+
+}
+
+
+.change-btn:hover{
+
+    background:#369f74;
+
+}
+
+
+
+/* ========================= */
+/* EMPTY */
+/* ========================= */
 
 .empty{
 
     background:white;
 
-    border-radius:16px;
+    border-radius:18px;
+
+    padding:80px 30px;
+
+    text-align:center;
+
+    box-shadow:
+
+        0 2px 10px rgba(0,0,0,.06);
+
+}
+
+
+.empty-icon{
+
+    font-size:60px;
+
+    margin-bottom:15px;
+
+}
+
+
+.empty h2{
+
+    margin-bottom:8px;
+
+}
+
+
+.empty p{
+
+    color:#888;
+
+}
+
+
+
+/* ========================= */
+/* LOADING */
+/* ========================= */
+
+.loading{
+
+    background:white;
+
+    border-radius:18px;
 
     padding:70px;
 
     text-align:center;
 
-    box-shadow:0 2px 10px rgba(0,0,0,.08);
+    color:#777;
 
 }
 
 
-.status-select{
+.loading-icon{
 
-    padding:10px;
+    font-size:45px;
 
-    border-radius:8px;
-
-    border:1px solid #ddd;
-
-    font-size:14px;
-
-    width:180px;
+    margin-bottom:12px;
 
 }
 
 
 
-@media(max-width:700px){
+/* ========================= */
+/* ERROR */
+/* ========================= */
+
+.error{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    color:#b91c1c;
+
+    background:#fef2f2;
+
+    padding:18px;
+
+    border-radius:12px;
+
+}
+
+
+
+/* ========================= */
+/* RESPONSIVE */
+/* ========================= */
+
+@media(max-width:800px){
 
     .card{
 
         flex-direction:column;
 
-        align-items:flex-start;
-
-        gap:20px;
-
     }
+
 
     .right{
 
         width:100%;
 
-        align-items:stretch;
+    }
+
+
+    .buttons{
+
+        width:100%;
 
     }
 
 }
+
+
+@media(max-width:600px){
+
+    .container{
+
+        margin:20px;
+
+    }
+
+
+    .header{
+
+        align-items:flex-start;
+
+        gap:15px;
+
+        flex-direction:column;
+
+    }
+
+
+    .details{
+
+        flex-direction:column;
+
+        gap:14px;
+
+    }
+
+
+    .buttons{
+
+        flex-direction:column;
+
+    }
+
+}
+
 </style>

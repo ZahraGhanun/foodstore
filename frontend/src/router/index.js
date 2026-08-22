@@ -8,6 +8,9 @@ import CartView from "../views/CartView.vue";
 import ProfileView from "../views/ProfileView.vue";
 import CheckoutView from "../views/CheckoutView.vue";
 import OrderDetailsView from "../views/OrderDetailsView.vue";
+import DriverRegisterView from "../views/DriverRegisterView.vue";
+import RestaurantRegisterView
+    from "../views/RestaurantRegisterView.vue";
 
 import RestaurantDashboardView
     from "../views/RestaurantDashboardView.vue";
@@ -32,6 +35,14 @@ const router = createRouter({
     history: createWebHistory(),
 
     routes: [
+        {
+            path: "/restaurant-register",
+            component: RestaurantRegisterView
+        },
+        {
+            path: "/driver-register",
+            component: DriverRegisterView
+        },
         {
             path: "/admin-dashboard",
             component: AdminDashboardView

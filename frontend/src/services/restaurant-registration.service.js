@@ -86,3 +86,40 @@ export async function reviewRequest(
     return data;
 
 }
+
+export async function createRequest(data) {
+
+    const response = await fetch(
+        API_URL,
+        {
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/json",
+
+                Authorization:
+                    `Bearer ${token.value}`
+
+            },
+
+            body: JSON.stringify(data)
+
+        }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            result.message ||
+            "Restaurant registration failed."
+        );
+
+    }
+
+    return result;
+
+}
