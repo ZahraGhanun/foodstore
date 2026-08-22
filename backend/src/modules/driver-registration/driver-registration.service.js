@@ -175,3 +175,44 @@ export async function reviewRequest(
 
 }
 
+export async function getPendingRequests() {
+
+    return prisma.driverRegistrationRequest.findMany({
+
+        where: {
+
+            status: "PENDING"
+
+        },
+
+        orderBy: {
+
+            createdAt: "asc"
+
+        },
+
+        include: {
+
+            applicant: {
+
+                select: {
+
+                    id: true,
+
+                    firstName: true,
+
+                    lastName: true,
+
+                    phone: true,
+
+                    email: true
+
+                }
+
+            }
+
+        }
+
+    });
+
+}

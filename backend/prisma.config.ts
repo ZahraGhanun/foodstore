@@ -13,3 +13,6 @@ export default defineConfig({
         url: process.env["DATABASE_URL"],
     },
 });
+
+
+// اصلا اینو حذف کنم چی میشه؟

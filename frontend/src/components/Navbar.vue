@@ -38,17 +38,36 @@
         </li>
 
         <li v-if="isDriver">
-  <RouterLink to="/driver-dashboard">
-    🚗 Driver Dashboard
-</RouterLink>
+
+    <RouterLink to="/driver-dashboard">
+
+        🚗 Driver Dashboard
+
+    </RouterLink>
+
 </li>
 
-        <li v-if="isRestaurantManager">
-          <RouterLink to="/restaurant-dashboard">
-            🍕 Dashboard
-          </RouterLink>
-        </li>
 
+<li v-if="isRestaurantManager">
+
+    <RouterLink to="/restaurant-dashboard">
+
+        🍕 Dashboard
+
+    </RouterLink>
+
+</li>
+
+
+<li v-if="isSystemAdmin">
+
+    <RouterLink to="/admin-dashboard">
+
+        👑 Admin Dashboard
+
+    </RouterLink>
+
+</li>
         <li>
           <RouterLink to="/profile">
             👤 {{ user.firstName }}
@@ -69,8 +88,14 @@
 </template>
 
 <script setup>
+
 import { computed } from "vue";
-import { user, logout } from "../stores/auth.js";
+
+import {
+    user,
+    logout
+} from "../stores/auth.js";
+
 
 const isDriver = computed(() => {
 
@@ -78,11 +103,20 @@ const isDriver = computed(() => {
 
 });
 
+
 const isRestaurantManager = computed(() => {
 
     return user.value?.roles?.includes("RestaurantManager");
 
 });
+
+
+const isSystemAdmin = computed(() => {
+
+    return user.value?.roles?.includes("SystemAdmin");
+
+});
+
 </script>
 
 <style scoped>

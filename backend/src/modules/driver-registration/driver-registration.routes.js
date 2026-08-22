@@ -10,11 +10,25 @@ import {
 
     createRequest,
 
+    getPendingRequests,
+
     reviewRequest
 
 } from "./driver-registration.controller.js";
 
 const router = Router();
+
+router.get(
+
+    "/pending",
+
+    authenticate,
+
+    requireRole("SystemAdmin"),
+
+    getPendingRequests
+
+);
 
 router.post(
 
