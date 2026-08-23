@@ -1,19 +1,23 @@
 import prisma from "../../config/prisma.js";
 import { addToCartSchema } from "./cart.validation.js";
 
+
 export async function getCart(userId) {
 
-    let cart = await prisma.cart.findUnique({
+    const cart = await prisma.cart.findUnique({
 
         where: { userId },
 
         include: {
+
             cartItems: {
                 include: {
                     food: true
                 }
             },
+
             restaurant: true
+
         }
 
     });
@@ -22,6 +26,8 @@ export async function getCart(userId) {
 
     return cart;
 }
+
+
 export async function addToCart(userId, data) {
 
     const validatedData = addToCartSchema.parse(data);
@@ -32,37 +38,79 @@ export async function addToCart(userId, data) {
     } = validatedData;
 
     let cart = await prisma.cart.findUnique({
+
         where: {
             userId
+        },
+
+        include: {
+            cartItems: true
         }
+
     });
 
     const food = await prisma.food.findUnique({
+
         where: {
             id: foodId
         }
+
     });
 
     if (!food) {
         throw new Error("Food not found.");
     }
 
-    // اگر Cart وجود ندارد بساز
+    // اگر کاربر اصلاً Cart نداشته باشد
     if (!cart) {
 
         cart = await prisma.cart.create({
 
             data: {
+
                 userId,
+
                 restaurantId: food.restaurantId
+
+            },
+
+            include: {
+                cartItems: true
             }
 
         });
 
     }
 
-    // جلوگیری از اضافه کردن غذای رستوران دیگر
-    if (cart.restaurantId !== food.restaurantId) {
+    // اگر Cart وجود دارد ولی خالی است،
+    // می‌توانیم آن را به رستوران جدید اختصاص بدهیم.
+    if (cart.cartItems.length === 0) {
+
+        if (cart.restaurantId !== food.restaurantId) {
+
+            cart = await prisma.cart.update({
+
+                where: {
+                    id: cart.id
+                },
+
+                data: {
+                    restaurantId: food.restaurantId
+                },
+
+                include: {
+                    cartItems: true
+                }
+
+            });
+
+        }
+
+    }
+
+    // اگر Cart خالی نیست،
+    // اجازه اضافه کردن غذای رستوران دیگر را نمی‌دهیم.
+    else if (cart.restaurantId !== food.restaurantId) {
 
         throw new Error(
             "You cannot add food from another restaurant."
@@ -86,118 +134,227 @@ export async function addToCart(userId, data) {
 
         });
 
+    // اگر غذا قبلاً در Cart وجود دارد
     if (existingItem) {
 
         return prisma.cartItem.update({
 
             where: {
+
                 id: existingItem.id
+
             },
 
             data: {
-                quantity: existingItem.quantity + quantity,
-                unitPrice: food.price
+
+                quantity:
+                    existingItem.quantity + quantity,
+
+                unitPrice:
+                    food.price
+
             },
 
             include: {
+
                 food: true
+
             }
 
         });
 
     }
 
+    // اگر غذا جدید است
     return prisma.cartItem.create({
 
         data: {
 
             cartId: cart.id,
+
             foodId,
+
             quantity,
+
             unitPrice: food.price
 
         },
 
         include: {
+
             food: true
+
         }
 
     });
 
 }
 
-export async function removeItem(userId, itemId) {
+
+export async function removeItem(
+    userId,
+    itemId
+) {
 
     const cart = await prisma.cart.findUnique({
-        where: { userId }
+
+        where: {
+            userId
+        }
+
     });
 
-    if (!cart) throw new Error("Cart not found.");
 
-    const item = await prisma.cartItem.findUnique({
-        where: { id: itemId }
-    });
+    if (!cart) {
 
-    if (!item || item.cartId !== cart.id) {
-        throw new Error("Item not found.");
+        throw new Error(
+            "Cart not found."
+        );
+
     }
 
+
+    const item =
+        await prisma.cartItem.findUnique({
+
+            where: {
+                id: itemId
+            }
+
+        });
+
+
+    if (
+        !item ||
+        item.cartId !== cart.id
+    ) {
+
+        throw new Error(
+            "Item not found."
+        );
+
+    }
+
+
     return prisma.cartItem.delete({
-        where: { id: itemId }
+
+        where: {
+            id: itemId
+        }
+
     });
 
 }
+
 
 export async function clearCart(userId) {
 
     const cart = await prisma.cart.findUnique({
-        where: { userId }
-    });
 
-    if (!cart) return;
-
-    await prisma.cartItem.deleteMany({
-        where: { cartId: cart.id }
-    });
-
-    return true;
-}
-
-
-export async function updateQuantity(userId, itemId, quantity) {
-
-    const cart = await prisma.cart.findUnique({
         where: {
             userId
         }
+
     });
+
+
+    if (!cart) return;
+
+
+    await prisma.cartItem.deleteMany({
+
+        where: {
+            cartId: cart.id
+        }
+
+    });
+
+
+    // آزاد کردن Cart برای رستوران بعدی
+    await prisma.cart.update({
+
+        where: {
+            id: cart.id
+        },
+
+        data: {
+
+            restaurantId: null
+
+        }
+
+    });
+
+
+    return true;
+
+}
+
+
+export async function updateQuantity(
+    userId,
+    itemId,
+    quantity
+) {
+
+    const cart = await prisma.cart.findUnique({
+
+        where: {
+            userId
+        }
+
+    });
+
 
     if (!cart) {
-        throw new Error("Cart not found.");
+
+        throw new Error(
+            "Cart not found."
+        );
+
     }
 
-    const item = await prisma.cartItem.findUnique({
-        where: {
-            id: itemId
-        }
-    });
 
-    if (!item || item.cartId !== cart.id) {
-        throw new Error("Item not found.");
+    const item =
+        await prisma.cartItem.findUnique({
+
+            where: {
+                id: itemId
+            }
+
+        });
+
+
+    if (
+        !item ||
+        item.cartId !== cart.id
+    ) {
+
+        throw new Error(
+            "Item not found."
+        );
+
     }
+
 
     return prisma.cartItem.update({
 
         where: {
+
             id: itemId
+
         },
 
         data: {
+
             quantity
+
         },
 
         include: {
+
             food: true
+
         }
 
     });

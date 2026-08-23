@@ -167,14 +167,21 @@ model DeliveryAddress {
 }
 
 model Cart {
-  id           String     @id @default(uuid()) @db.Uuid
-  userId       String     @unique @db.Uuid
-  restaurantId String     @db.Uuid
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  user         User       @relation(fields: [userId], references: [id])
-  cartItems    CartItem[]
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+
+  restaurantId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+
+  cartItems CartItem[]
 
   @@map("Cart")
 }
