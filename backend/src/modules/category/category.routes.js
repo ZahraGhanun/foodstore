@@ -12,7 +12,8 @@ import {
     createMyRestaurantCategory,
     getMyCategories,
     updateMyRestaurantCategory,
-    deleteMyRestaurantCategory
+    deleteMyRestaurantCategory,
+    moveMyRestaurantCategory
 
 } from "./category.controller.js";
 
@@ -76,6 +77,18 @@ router.get(
     "/restaurants/:restaurantId/categories",
 
     getCategories
+
+);
+
+router.put(
+
+    "/restaurant/my-categories/:categoryId/move",
+
+    authenticate,
+
+    requireRole("RestaurantManager"),
+
+    moveMyRestaurantCategory
 
 );
 

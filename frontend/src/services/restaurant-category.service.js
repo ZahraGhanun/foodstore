@@ -155,4 +155,46 @@ export async function deleteCategory(categoryId) {
 
 }
 
+export async function moveCategory(categoryId, direction) {
 
+    const response = await fetch(
+
+        `${API_URL}/restaurant/my-categories/${categoryId}/move`,
+
+        {
+
+            method: "PUT",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                Authorization: `Bearer ${token.value}`
+
+            },
+
+            body: JSON.stringify({
+
+                direction
+
+            })
+
+        }
+
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+
+            data.message || "Failed to update category order."
+
+        );
+
+    }
+
+    return data;
+
+}

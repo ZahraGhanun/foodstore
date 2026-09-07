@@ -22,11 +22,18 @@ export async function getRestaurantById(id) {
 
         include: {
 
-            categories: true,
+            categories: {
+                orderBy: {
+                    displayOrder: "asc"
+                }
+            },
 
             foods: {
                 where: {
                     isActive: true
+                },
+                orderBy: {
+                    displayOrder: "asc"
                 }
             }
 

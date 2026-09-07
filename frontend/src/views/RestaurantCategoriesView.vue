@@ -4,10 +4,9 @@ import { ref, onMounted } from "vue";
 import AddCategoryModal from "../components/AddCategoryModal.vue";
 
 import {
-
     getMyCategories,
-    deleteCategory as deleteCategoryApi
-
+    deleteCategory as deleteCategoryApi,
+    moveCategory
 } from "../services/restaurant-category.service.js";
 
 const categories = ref([]);
@@ -96,6 +95,25 @@ async function deleteCategoryHandler(category) {
     }
 
 }
+
+async function moveCategoryHandler(category, direction) {
+
+    try {
+
+        await moveCategory(category.id, direction);
+
+        await loadCategories();
+
+    }
+
+    catch (err) {
+
+        alert(err.message);
+
+    }
+
+}
+
 </script>
 
 <template>
@@ -199,25 +217,43 @@ async function deleteCategoryHandler(category) {
 
     <div class="actions">
 
-        <button
-            class="edit"
-            @click="editCategory(category)"
-        >
+    <button
+        class="move"
+        @click="moveCategoryHandler(category, 'up')"
+    >
 
-            ✏ Edit
+        ↑
 
-        </button>
+    </button>
 
-        <button
-            class="delete"
-            @click="deleteCategoryHandler(category)"
-        >
+    <button
+        class="move"
+        @click="moveCategoryHandler(category, 'down')"
+    >
 
-            🗑 Delete
+        ↓
 
-        </button>
+    </button>
 
-    </div>
+    <button
+        class="edit"
+        @click="editCategory(category)"
+    >
+
+        ✏ Edit
+
+    </button>
+
+    <button
+        class="delete"
+        @click="deleteCategoryHandler(category)"
+    >
+
+        🗑 Delete
+
+    </button>
+
+</div>
 
 </div>
 
@@ -400,6 +436,31 @@ async function deleteCategoryHandler(category) {
     font-weight:bold;
 
     transition:.2s;
+
+}
+.move {
+
+    background: #3b82f6;
+
+    color: white;
+
+    border: none;
+
+    padding: 10px 14px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+}
+
+.move:hover {
+
+    background: #2563eb;
 
 }
 

@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { addToCart as addFoodToCart } from "../services/cart.service.js";import FoodCard from "../components/FoodCard.vue";
+import { addToCart as addFoodToCart } from "../services/cart.service.js";
+import FoodCard from "../components/FoodCard.vue";
 import { getRestaurantById } from "../services/restaurant.service.js";
 
 const route = useRoute();
@@ -23,32 +24,27 @@ onMounted(async () => {
     console.log("Restaurant:", restaurant.value);
 
   } catch (err) {
-
     console.error(err);
-
     error.value = err.message;
-
   } finally {
-
     loading.value = false;
-
   }
 });
 
 async function addToCart(food) {
-
   try {
-
     await addFoodToCart(food.id);
 
     alert(`${food.name} added to cart.`);
-
   } catch (err) {
-
     alert(err.message);
-
   }
+}
 
+function foodsForCategory(categoryId) {
+  return restaurant.value.foods.filter(
+    food => food.categoryId === categoryId
+  );
 }
 </script>
 
@@ -73,24 +69,54 @@ async function addToCart(food) {
 
       <h2>Foods</h2>
 
+      <!-- Categories -->
       <div
-        v-if="restaurant.foods && restaurant.foods.length"
-        class="foods"
+        v-if="restaurant.categories && restaurant.categories.length"
+        class="categories"
       >
 
-        <FoodCard
-          v-for="food in restaurant.foods"
-          :key="food.id"
-          :food="food"
-          @add="addToCart"
-        />
+        <div
+          v-for="category in restaurant.categories"
+          :key="category.id"
+          class="category"
+        >
+
+          <!-- Foods belonging to this category -->
+          <div
+            v-if="foodsForCategory(category.id).length"
+            class="category-content"
+          >
+
+            <h2 class="category-title">
+              {{ category.name }}
+            </h2>
+
+            <p
+              v-if="category.description"
+              class="category-description"
+            >
+              {{ category.description }}
+            </p>
+
+            <div class="foods">
+
+              <FoodCard
+                v-for="food in foodsForCategory(category.id)"
+                :key="food.id"
+                :food="food"
+                @add="addToCart"
+              />
+
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 
       <div v-else>
-
-        <p>No foods found.</p>
-
+        <p>No categories found.</p>
       </div>
 
     </div>
@@ -103,6 +129,24 @@ async function addToCart(food) {
   max-width: 1100px;
   margin: 40px auto;
   padding: 20px;
+}
+
+.categories {
+  margin-top: 30px;
+}
+
+.category {
+  margin-bottom: 45px;
+}
+
+.category-title {
+  margin-bottom: 8px;
+  font-size: 28px;
+}
+
+.category-description {
+  color: #666;
+  margin-bottom: 20px;
 }
 
 .foods {

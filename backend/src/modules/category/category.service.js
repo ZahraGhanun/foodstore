@@ -115,7 +115,7 @@ export async function getMyCategories(managerId) {
 
         orderBy: {
 
-            createdAt: "asc"
+            displayOrder: "asc"
 
         }
 
@@ -259,3 +259,133 @@ export async function deleteMyRestaurantCategory(userId, categoryId) {
 
 }
 
+
+export async function moveMyRestaurantCategory(
+    userId,
+    categoryId,
+    direction
+) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+            managerId: userId
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    const category = await prisma.category.findFirst({
+
+        where: {
+            id: categoryId,
+            restaurantId: restaurant.id
+        }
+
+    });
+
+    if (!category) {
+
+        throw new Error("Category not found.");
+
+    }
+
+    if (
+        direction !== "up" &&
+        direction !== "down"
+    ) {
+
+        throw new Error("Invalid direction.");
+
+    }
+
+    const categories = await prisma.category.findMany({
+
+        where: {
+            restaurantId: restaurant.id
+        },
+
+        orderBy: [
+            {
+                displayOrder: "asc"
+            },
+            {
+                createdAt: "asc"
+            }
+        ]
+
+    });
+
+    const currentIndex = categories.findIndex(
+
+        item => item.id === categoryId
+
+    );
+
+    if (currentIndex === -1) {
+
+        throw new Error("Category not found.");
+
+    }
+
+    const targetIndex =
+        direction === "up"
+            ? currentIndex - 1
+            : currentIndex + 1;
+
+    // Already at the top or bottom
+    if (
+        targetIndex < 0 ||
+        targetIndex >= categories.length
+    ) {
+
+        return category;
+
+    }
+
+    // Swap the categories in memory
+    const reorderedCategories = [...categories];
+
+    [
+        reorderedCategories[currentIndex],
+        reorderedCategories[targetIndex]
+    ] = [
+            reorderedCategories[targetIndex],
+            reorderedCategories[currentIndex]
+        ];
+
+    // Save the complete order
+    await prisma.$transaction(
+
+        reorderedCategories.map((item, index) =>
+
+            prisma.category.update({
+
+                where: {
+                    id: item.id
+                },
+
+                data: {
+                    displayOrder: index
+                }
+
+            })
+
+        )
+
+    );
+
+    return prisma.category.findUnique({
+
+        where: {
+            id: categoryId
+        }
+
+    });
+
+}

@@ -189,3 +189,37 @@ export async function deleteMyRestaurantCategory(req, res, next) {
 
 }
 
+
+export async function moveMyRestaurantCategory(req, res, next) {
+
+    try {
+
+        const category = await service.moveMyRestaurantCategory(
+
+            req.user.id,
+
+            req.params.categoryId,
+
+            req.body.direction
+
+        );
+
+        return res.status(200).json({
+
+            success: true,
+
+            message: "Category order updated successfully.",
+
+            data: category
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}

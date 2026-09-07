@@ -21,11 +21,11 @@ export default function errorMiddleware(err, req, res, next) {
 
     console.error(err);
 
-    return res.status(500).json({
+    return res.status(400).json({
 
         success: false,
 
-        message: "Internal server error."
+        message: err.message || "Something went wrong."
 
     });
 
