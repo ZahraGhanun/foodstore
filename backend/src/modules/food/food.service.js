@@ -123,11 +123,27 @@ export async function getRestaurantFoods(managerId) {
 
         },
 
-        orderBy: {
+        include: {
 
-            createdAt: "desc"
+            category: true
 
-        }
+        },
+
+        orderBy: [
+
+            {
+                categoryId: "asc"
+            },
+
+            {
+                displayOrder: "asc"
+            },
+
+            {
+                createdAt: "asc"
+            }
+
+        ]
 
     });
 
@@ -292,6 +308,141 @@ export async function deleteMyRestaurantFood(userId, foodId) {
 
             id: foodId
 
+        }
+
+    });
+
+}
+
+export async function moveMyRestaurantFood(
+    userId,
+    foodId,
+    direction
+) {
+
+    const restaurant = await prisma.restaurant.findFirst({
+
+        where: {
+            managerId: userId
+        }
+
+    });
+
+    if (!restaurant) {
+
+        throw new Error("Restaurant not found.");
+
+    }
+
+    const food = await prisma.food.findFirst({
+
+        where: {
+            id: foodId,
+            restaurantId: restaurant.id
+        }
+
+    });
+
+    if (!food) {
+
+        throw new Error("Food not found.");
+
+    }
+
+    if (
+        direction !== "up" &&
+        direction !== "down"
+    ) {
+
+        throw new Error("Invalid direction.");
+
+    }
+
+    const foods = await prisma.food.findMany({
+
+        where: {
+            restaurantId: restaurant.id,
+            categoryId: food.categoryId
+        },
+
+        orderBy: [
+            {
+                displayOrder: "asc"
+            },
+            {
+                createdAt: "asc"
+            }
+        ]
+
+    });
+
+    const currentIndex = foods.findIndex(
+
+        item => item.id === foodId
+
+    );
+
+    if (currentIndex === -1) {
+
+        throw new Error("Food not found.");
+
+    }
+
+    const targetIndex =
+        direction === "up"
+            ? currentIndex - 1
+            : currentIndex + 1;
+
+    // Already at the top or bottom
+    if (
+        targetIndex < 0 ||
+        targetIndex >= foods.length
+    ) {
+
+        return food;
+
+    }
+
+    // Swap foods in memory
+    const reorderedFoods = [...foods];
+
+    [
+        reorderedFoods[currentIndex],
+        reorderedFoods[targetIndex]
+    ] = [
+            reorderedFoods[targetIndex],
+            reorderedFoods[currentIndex]
+        ];
+
+    // Save the complete order
+    await prisma.$transaction(
+
+        reorderedFoods.map((item, index) =>
+
+            prisma.food.update({
+
+                where: {
+                    id: item.id
+                },
+
+                data: {
+                    displayOrder: index
+                }
+
+            })
+
+        )
+
+    );
+
+    return prisma.food.findUnique({
+
+        where: {
+            id: foodId
+        },
+
+        include: {
+            category: true
         }
 
     });

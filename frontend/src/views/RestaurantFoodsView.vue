@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
+
 import {
-
     getMyFoods,
-    deleteFood
-
+    deleteFood,
+    moveFood
 } from "../services/restaurant-food.service.js";
+
 import AddFoodModal from "../components/AddFoodModal.vue";
 
 const showDeleteModal = ref(false);
@@ -62,7 +63,7 @@ function editFood(food) {
 
 }
 
-function deleteFoodHandler(food){
+function deleteFoodHandler(food) {
 
     selectedFoodToDelete.value = food;
 
@@ -70,9 +71,9 @@ function deleteFoodHandler(food){
 
 }
 
-async function confirmDelete(){
+async function confirmDelete() {
 
-    try{
+    try {
 
         await deleteFood(selectedFoodToDelete.value.id);
 
@@ -84,7 +85,7 @@ async function confirmDelete(){
 
     }
 
-    catch(err){
+    catch (err) {
 
         alert(err.message);
 
@@ -92,13 +93,69 @@ async function confirmDelete(){
 
 }
 
-function cancelDelete(){
+function cancelDelete() {
 
     showDeleteModal.value = false;
 
     selectedFoodToDelete.value = null;
 
 }
+
+async function moveFoodHandler(food, direction) {
+
+    try {
+
+        await moveFood(food.id, direction);
+
+        await loadFoods();
+
+    }
+
+    catch (err) {
+
+        alert(err.message);
+
+    }
+
+}
+
+
+/*
+ * Group foods by category.
+ *
+ * Each category keeps its own foods,
+ * so ↑ and ↓ can only affect foods
+ * inside that category.
+ */
+const groupedFoods = computed(() => {
+
+    const groups = new Map();
+
+    for (const food of foods.value) {
+
+        const categoryId =
+            food.category?.id || food.categoryId;
+
+        const categoryName =
+            food.category?.name || "Uncategorized";
+
+        if (!groups.has(categoryId)) {
+
+            groups.set(categoryId, {
+                id: categoryId,
+                name: categoryName,
+                foods: []
+            });
+
+        }
+
+        groups.get(categoryId).foods.push(food);
+
+    }
+
+    return Array.from(groups.values());
+
+});
 
 </script>
 
@@ -141,11 +198,13 @@ function cancelDelete(){
 
     </div>
 
+
     <div v-if="loading">
 
         Loading...
 
     </div>
+
 
     <div v-else-if="error">
 
@@ -153,8 +212,9 @@ function cancelDelete(){
 
     </div>
 
+
     <div
-        v-else-if="foods.length===0"
+        v-else-if="foods.length === 0"
         class="empty"
     >
 
@@ -162,92 +222,157 @@ function cancelDelete(){
 
     </div>
 
+
     <div
         v-else
-        class="foods"
+        class="categories"
     >
 
         <div
-            v-for="food in foods"
-            :key="food.id"
-            class="card"
+            v-for="category in groupedFoods"
+            :key="category.id"
+            class="category-section"
         >
 
-            <img
-                :src="food.imageUrl || 'https://picsum.photos/140'"
-                alt="food"
-            >
-
-            <div class="info">
+            <div class="category-header">
 
                 <h2>
 
-                    {{ food.name }}
+                    📂 {{ category.name }}
 
                 </h2>
 
-                <p>
+                <span class="category-count">
 
-                    {{ food.description }}
-
-                </p>
-
-                <strong>
-
-                    {{ Number(food.price).toLocaleString() }}
-
-                    تومان
-
-                </strong>
-
-                <p
-                    v-if="food.category"
-                    class="category"
-                >
-
-                    📂 {{ food.category.name }}
-
-                </p>
-
-                <span
-                    v-if="food.isActive"
-                    class="status active"
-                >
-
-                    ✅ Active
-
-                </span>
-
-                <span
-                    v-else
-                    class="status inactive"
-                >
-
-                    ❌ Inactive
+                    {{ category.foods.length }}
 
                 </span>
 
             </div>
 
-            <div class="actions">
 
-                <button
-                    class="edit"
-                    @click="editFood(food)"
+            <div class="category-line"></div>
+
+
+            <div class="foods">
+
+                <div
+                    v-for="food in category.foods"
+                    :key="food.id"
+                    class="card"
                 >
 
-                    ✏ Edit
+                    <img
+                        :src="
+                            food.imageUrl ||
+                            'https://picsum.photos/140'
+                        "
+                        alt="food"
+                    >
 
-                </button>
 
-                <button
-                    class="delete"
-                    @click="deleteFoodHandler(food)"
-                >
+                    <div class="info">
 
-                    🗑 Delete
+                        <h2>
 
-                </button>
+                            {{ food.name }}
+
+                        </h2>
+
+                        <p
+                            v-if="food.description"
+                        >
+
+                            {{ food.description }}
+
+                        </p>
+
+                        <strong>
+
+                            {{ Number(food.price).toLocaleString() }}
+
+                            تومان
+
+                        </strong>
+
+
+                        <span
+                            v-if="food.isActive"
+                            class="status active"
+                        >
+
+                            ✅ Active
+
+                        </span>
+
+                        <span
+                            v-else
+                            class="status inactive"
+                        >
+
+                            ❌ Inactive
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="actions">
+
+                        <button
+                            class="move"
+                            @click="
+                                moveFoodHandler(
+                                    food,
+                                    'up'
+                                )
+                            "
+                        >
+
+                            ↑
+
+                        </button>
+
+
+                        <button
+                            class="move"
+                            @click="
+                                moveFoodHandler(
+                                    food,
+                                    'down'
+                                )
+                            "
+                        >
+
+                            ↓
+
+                        </button>
+
+
+                        <button
+                            class="edit"
+                            @click="editFood(food)"
+                        >
+
+                            ✏ Edit
+
+                        </button>
+
+
+                        <button
+                            class="delete"
+                            @click="
+                                deleteFoodHandler(food)
+                            "
+                        >
+
+                            🗑 Delete
+
+                        </button>
+
+                    </div>
+
+                </div>
 
             </div>
 
@@ -256,6 +381,8 @@ function cancelDelete(){
     </div>
 
 </div>
+
+
 <AddFoodModal
 
     v-model="showAddModal"
@@ -265,6 +392,8 @@ function cancelDelete(){
     @saved="loadFoods"
 
 />
+
+
 <div
     v-if="showDeleteModal"
     class="modal-overlay"
@@ -304,6 +433,7 @@ function cancelDelete(){
 
         </small>
 
+
         <div class="modal-buttons">
 
             <button
@@ -314,6 +444,7 @@ function cancelDelete(){
                 Cancel
 
             </button>
+
 
             <button
                 class="delete-btn"
@@ -332,361 +463,507 @@ function cancelDelete(){
 
 </template>
 
+
 <style scoped>
 
-.container{
+.container {
 
-    max-width:1100px;
-    margin:40px auto;
-
-}
-
-.header{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:30px;
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
 
 }
 
-.header h1{
 
-    margin:0;
+/* Header */
 
-}
+.header {
 
-.header p{
-
-    margin-top:8px;
-    color:#666;
-
-}
-
-.count{
-
-    color:#42b883;
-    font-size:20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
 
 }
 
-.add-btn{
+.header h1 {
 
-    padding:12px 22px;
-    border:none;
-    border-radius:10px;
-    background:#42b883;
-    color:white;
-    cursor:pointer;
-    font-size:15px;
-    font-weight:bold;
-    transition:.2s;
+    margin: 0;
 
 }
 
-.add-btn:hover{
+.header p {
 
-    background:#369f74;
-
-}
-
-.foods{
-
-    display:flex;
-    flex-direction:column;
-    gap:20px;
+    margin-top: 8px;
+    color: #666;
 
 }
 
-.card{
+.count {
 
-    display:flex;
-    align-items:center;
-    gap:22px;
-    background:white;
-    border-radius:16px;
-    padding:20px;
-    box-shadow:0 2px 10px rgba(0,0,0,.08);
-    transition:.2s;
+    color: #42b883;
+    font-size: 20px;
 
 }
 
-.card:hover{
+.add-btn {
 
-    transform:translateY(-3px);
-    box-shadow:0 8px 20px rgba(0,0,0,.12);
-
-}
-
-img{
-
-    width:140px;
-    height:140px;
-    border-radius:12px;
-    object-fit:cover;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 10px;
+    background: #42b883;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+    transition: .2s;
 
 }
 
-.info{
+.add-btn:hover {
 
-    flex:1;
-
-}
-
-.info h2{
-
-    margin-bottom:10px;
+    background: #369f74;
 
 }
 
-.info p{
 
-    color:#666;
-    margin-bottom:10px;
+/* Categories */
 
-}
+.categories {
 
-.info strong{
-
-    display:block;
-    margin-bottom:10px;
-    color:#42b883;
-    font-size:18px;
+    display: flex;
+    flex-direction: column;
+    gap: 45px;
 
 }
 
-.category{
+.category-section {
 
-    font-weight:600;
-    color:#555;
-    margin-bottom:12px;
+    width: 100%;
 
 }
 
-.status{
+.category-header {
 
-    display:inline-block;
-    padding:6px 14px;
-    border-radius:20px;
-    font-size:13px;
-    font-weight:bold;
-
-}
-
-.active{
-
-    background:#dcfce7;
-    color:#15803d;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
 
 }
 
-.inactive{
+.category-header h2 {
 
-    background:#fee2e2;
-    color:#dc2626;
-
-}
-
-.actions{
-
-    display:flex;
-    flex-direction:column;
-    gap:12px;
+    margin: 0;
+    font-size: 24px;
 
 }
 
-.actions button{
+.category-count {
 
-    border:none;
-    color:white;
-    padding:10px 18px;
-    border-radius:8px;
-    cursor:pointer;
-    transition:.2s;
-    font-weight:bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-}
+    min-width: 28px;
+    height: 28px;
 
-.edit{
+    padding: 0 8px;
 
-    background:#42b883;
+    border-radius: 20px;
 
-}
+    background: #e8f8f1;
+    color: #42b883;
 
-.edit:hover{
-
-    background:#369f74;
+    font-size: 13px;
+    font-weight: bold;
 
 }
 
-.delete{
+.category-line {
 
-    background:#ef4444;
-
-}
-
-.delete:hover{
-
-    background:#dc2626;
+    width: 100%;
+    height: 1px;
+    background: #e5e7eb;
+    margin-bottom: 20px;
 
 }
 
-.empty{
 
-    text-align:center;
-    padding:70px;
-    background:white;
-    border-radius:14px;
-    box-shadow:0 2px 10px rgba(0,0,0,.08);
-    color:#666;
+/* Foods */
+
+.foods {
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 
 }
 
-@media(max-width:800px){
 
-    .card{
+/* Food card */
 
-        flex-direction:column;
-        align-items:flex-start;
+.card {
+
+    display: flex;
+    align-items: center;
+    gap: 22px;
+
+    background: white;
+    border-radius: 16px;
+
+    padding: 20px;
+
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+
+    transition: .2s;
+
+}
+
+.card:hover {
+
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.12);
+
+}
+
+
+img {
+
+    width: 140px;
+    height: 140px;
+
+    border-radius: 12px;
+
+    object-fit: cover;
+
+}
+
+
+.info {
+
+    flex: 1;
+
+}
+
+.info h2 {
+
+    margin-bottom: 10px;
+
+}
+
+.info p {
+
+    color: #666;
+    margin-bottom: 10px;
+
+}
+
+.info strong {
+
+    display: block;
+
+    margin-bottom: 12px;
+
+    color: #42b883;
+
+    font-size: 18px;
+
+}
+
+
+/* Status */
+
+.status {
+
+    display: inline-block;
+
+    padding: 6px 14px;
+
+    border-radius: 20px;
+
+    font-size: 13px;
+    font-weight: bold;
+
+}
+
+.active {
+
+    background: #dcfce7;
+    color: #15803d;
+
+}
+
+.inactive {
+
+    background: #fee2e2;
+    color: #dc2626;
+
+}
+
+
+/* Actions */
+
+.actions {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+}
+
+.actions button {
+
+    border: none;
+
+    color: white;
+
+    padding: 10px 18px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+    font-weight: bold;
+
+}
+
+.move {
+
+    background: #3b82f6;
+
+    font-size: 18px;
+
+}
+
+.move:hover {
+
+    background: #2563eb;
+
+}
+
+.edit {
+
+    background: #42b883;
+
+}
+
+.edit:hover {
+
+    background: #369f74;
+
+}
+
+.delete {
+
+    background: #ef4444;
+
+}
+
+.delete:hover {
+
+    background: #dc2626;
+
+}
+
+
+/* Empty */
+
+.empty {
+
+    text-align: center;
+
+    padding: 70px;
+
+    background: white;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 2px 10px rgba(0,0,0,.08);
+
+    color: #666;
+
+}
+
+
+/* Delete modal */
+
+.modal-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0,0,0,.45);
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    z-index: 999;
+
+}
+
+.delete-modal {
+
+    width: 420px;
+
+    max-width: 90%;
+
+    background: white;
+
+    border-radius: 18px;
+
+    padding: 30px;
+
+    text-align: center;
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.2);
+
+}
+
+.delete-icon {
+
+    font-size: 54px;
+
+    margin-bottom: 12px;
+
+}
+
+.delete-modal h2 {
+
+    margin-bottom: 14px;
+
+}
+
+.delete-modal p {
+
+    color: #555;
+
+    line-height: 1.7;
+
+    margin-bottom: 8px;
+
+}
+
+.delete-modal small {
+
+    color: #999;
+
+}
+
+.modal-buttons {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 16px;
+
+    margin-top: 26px;
+
+}
+
+.cancel-btn {
+
+    padding: 10px 22px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: #e5e7eb;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+}
+
+.cancel-btn:hover {
+
+    background: #d1d5db;
+
+}
+
+.delete-btn {
+
+    padding: 10px 22px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: #ef4444;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+}
+
+.delete-btn:hover {
+
+    background: #dc2626;
+
+}
+
+
+/* Responsive */
+
+@media(max-width: 800px) {
+
+    .header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 20px;
 
     }
 
-    .actions{
+    .add-btn {
 
-        width:100%;
-        flex-direction:row;
-
-    }
-
-    .actions button{
-
-        flex:1;
+        width: 100%;
 
     }
 
-}
+    .card {
 
-.modal-overlay{
+        flex-direction: column;
 
-    position:fixed;
+        align-items: flex-start;
 
-    inset:0;
+    }
 
-    background:rgba(0,0,0,.45);
+    .actions {
 
-    display:flex;
+        width: 100%;
 
-    justify-content:center;
+        flex-direction: row;
 
-    align-items:center;
+        flex-wrap: wrap;
 
-    z-index:999;
+    }
 
-}
+    .actions button {
 
-.delete-modal{
+        flex: 1;
 
-    width:420px;
-
-    max-width:90%;
-
-    background:white;
-
-    border-radius:18px;
-
-    padding:30px;
-
-    text-align:center;
-
-    box-shadow:0 20px 50px rgba(0,0,0,.2);
-
-}
-
-.delete-icon{
-
-    font-size:54px;
-
-    margin-bottom:12px;
-
-}
-
-.delete-modal h2{
-
-    margin-bottom:14px;
-
-}
-
-.delete-modal p{
-
-    color:#555;
-
-    line-height:1.7;
-
-    margin-bottom:8px;
-
-}
-
-.delete-modal small{
-
-    color:#999;
-
-}
-
-.modal-buttons{
-
-    display:flex;
-
-    justify-content:center;
-
-    gap:16px;
-
-    margin-top:26px;
-
-}
-
-.cancel-btn{
-
-    padding:10px 22px;
-
-    border:none;
-
-    border-radius:10px;
-
-    background:#e5e7eb;
-
-    cursor:pointer;
-
-    font-weight:bold;
-
-}
-
-.delete-btn{
-
-    padding:10px 22px;
-
-    border:none;
-
-    border-radius:10px;
-
-    background:#ef4444;
-
-    color:white;
-
-    cursor:pointer;
-
-    font-weight:bold;
-
-}
-
-.delete-btn:hover{
-
-    background:#dc2626;
-
-}
-
-.cancel-btn:hover{
-
-    background:#d1d5db;
+    }
 
 }
 

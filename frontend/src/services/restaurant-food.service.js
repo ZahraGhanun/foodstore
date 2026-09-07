@@ -135,3 +135,42 @@ export async function deleteFood(foodId) {
     return data;
 
 }
+
+export async function moveFood(foodId, direction) {
+
+    const response = await fetch(
+
+        `${API_URL}/restaurant/my-foods/${foodId}/move`,
+
+        {
+
+            method: "PUT",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                Authorization: `Bearer ${token.value}`
+
+            },
+
+            body: JSON.stringify({ direction })
+
+        }
+
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message || "Failed to update food order."
+        );
+
+    }
+
+    return data;
+
+}
+

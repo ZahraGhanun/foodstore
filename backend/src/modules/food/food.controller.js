@@ -183,3 +183,37 @@ export async function deleteMyRestaurantFood(req, res, next) {
     }
 
 }
+
+export async function moveMyRestaurantFood(req, res, next) {
+
+    try {
+
+        const food = await service.moveMyRestaurantFood(
+
+            req.user.id,
+
+            req.params.foodId,
+
+            req.body.direction
+
+        );
+
+        return res.json({
+
+            success: true,
+
+            message: "Food order updated successfully.",
+
+            data: food
+
+        });
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+}
