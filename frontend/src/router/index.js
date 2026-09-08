@@ -30,11 +30,18 @@ import DriverDashboardView
 import AdminDashboardView
     from "../views/AdminDashboardView.vue";
 
+import MyOrdersView from "../views/MyOrdersView.vue";
+
 const router = createRouter({
 
     history: createWebHistory(),
 
     routes: [
+        {
+            path: "/orders",
+            component: MyOrdersView
+        },
+
         {
             path: "/restaurants/:restaurantId/foods/:foodId/reviews",
             component: FoodReviewsView

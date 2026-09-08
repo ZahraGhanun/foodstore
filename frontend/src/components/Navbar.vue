@@ -88,6 +88,14 @@
         </li>
 
 
+        <!-- My Orders -->
+        <li>
+          <RouterLink to="/orders">
+            📦 My Orders
+          </RouterLink>
+        </li>
+
+
         <!-- Driver Dashboard -->
         <li v-if="isDriver">
           <RouterLink to="/driver-dashboard">
