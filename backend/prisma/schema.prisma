@@ -201,24 +201,24 @@ model CartItem {
 }
 
 model Order {
-  id                String          @id @default(uuid()) @db.Uuid
-  userId            String          @db.Uuid
-  restaurantId      String          @db.Uuid
-  deliveryAddressId String          @db.Uuid
-  status            OrderStatus     @default(PENDING)
-  totalPrice        Decimal         @db.Decimal(10, 2)
-  deliveryFee       Decimal         @db.Decimal(10, 2)
-  finalPrice        Decimal         @db.Decimal(10, 2)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  driverId          String?         @db.Uuid
-  deliveryAddress   DeliveryAddress @relation(fields: [deliveryAddressId], references: [id])
-  driver            Driver?         @relation(fields: [driverId], references: [id])
-  restaurant        Restaurant      @relation(fields: [restaurantId], references: [id])
-  user              User            @relation(fields: [userId], references: [id])
-  orderItems        OrderItem[]
-  payment           Payment?
-  review            Review?
+  id                String      @id @default(uuid()) @db.Uuid
+  userId            String      @db.Uuid
+  restaurantId      String      @db.Uuid
+  deliveryAddressId String      @db.Uuid
+  status            OrderStatus @default(PENDING)
+  totalPrice        Decimal     @db.Decimal(10, 2)
+  deliveryFee       Decimal     @db.Decimal(10, 2)
+  finalPrice        Decimal     @db.Decimal(10, 2)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  driverId          String?     @db.Uuid
+
+  deliveryAddress DeliveryAddress @relation(fields: [deliveryAddressId], references: [id])
+  driver          Driver?         @relation(fields: [driverId], references: [id])
+  restaurant      Restaurant      @relation(fields: [restaurantId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
+  orderItems      OrderItem[]
+  payment         Payment?
 
   @@map("Order")
 }
@@ -229,10 +229,29 @@ model OrderItem {
   foodId    String  @db.Uuid
   quantity  Int
   unitPrice Decimal @db.Decimal(10, 2)
-  food      Food    @relation(fields: [foodId], references: [id])
-  order     Order   @relation(fields: [orderId], references: [id])
+
+  food   Food    @relation(fields: [foodId], references: [id])
+  order  Order   @relation(fields: [orderId], references: [id])
+  review Review?
 
   @@map("OrderItem")
+}
+
+model Review {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  restaurantId String   @db.Uuid
+  orderItemId  String   @unique @db.Uuid
+  rating       Int
+  comment      String?  @db.VarChar(1000)
+  complaint    String?  @db.VarChar(1000)
+  createdAt    DateTime @default(now())
+
+  orderItem  OrderItem  @relation(fields: [orderItemId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@map("Review")
 }
 
 model Driver {
@@ -260,21 +279,6 @@ model Payment {
   order         Order         @relation(fields: [orderId], references: [id])
 
   @@map("Payment")
-}
-
-model Review {
-  id           String     @id @default(uuid()) @db.Uuid
-  userId       String     @db.Uuid
-  restaurantId String     @db.Uuid
-  orderId      String     @unique @db.Uuid
-  rating       Int
-  comment      String?    @db.VarChar(1000)
-  createdAt    DateTime   @default(now())
-  order        Order      @relation(fields: [orderId], references: [id])
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  user         User       @relation(fields: [userId], references: [id])
-
-  @@map("Review")
 }
 
 enum RequestStatus {
