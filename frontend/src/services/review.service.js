@@ -12,7 +12,6 @@ export async function createReview(orderItemId, review) {
 
             headers: {
                 "Content-Type": "application/json",
-
                 Authorization: `Bearer ${token.value}`
             },
 
@@ -20,21 +19,33 @@ export async function createReview(orderItemId, review) {
         }
     );
 
-
     const data = await response.json();
 
-
     if (!response.ok) {
-
         throw new Error(
             data.message || "Failed to create review."
         );
-
     }
 
+    return data;
+}
+
+
+export async function getFoodReviews(foodId) {
+
+    const response = await fetch(
+        `${API_URL}/reviews/food/${foodId}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data.message || "Failed to load food reviews."
+        );
+    }
 
     return data;
-
 }
 
 
@@ -49,19 +60,13 @@ export async function getMyReviews() {
         }
     );
 
-
     const data = await response.json();
 
-
     if (!response.ok) {
-
         throw new Error(
             data.message || "Failed to load reviews."
         );
-
     }
 
-
     return data;
-
 }

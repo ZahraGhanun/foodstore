@@ -11,7 +11,7 @@ import OrderDetailsView from "../views/OrderDetailsView.vue";
 import DriverRegisterView from "../views/DriverRegisterView.vue";
 import RestaurantRegisterView
     from "../views/RestaurantRegisterView.vue";
-
+import FoodReviewsView from "../views/FoodReviewsView.vue";
 import RestaurantDashboardView
     from "../views/RestaurantDashboardView.vue";
 
@@ -35,6 +35,10 @@ const router = createRouter({
     history: createWebHistory(),
 
     routes: [
+        {
+            path: "/restaurants/:restaurantId/foods/:foodId/reviews",
+            component: FoodReviewsView
+        },
         {
             path: "/restaurant-register",
             component: RestaurantRegisterView

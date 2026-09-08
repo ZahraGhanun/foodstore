@@ -5,10 +5,19 @@ import authenticate
 
 import {
     createReview,
+    getFoodReviews,
     getMyReviews
 } from "./review.controller.js";
 
+
 const router = Router();
+
+
+router.get(
+    "/food/:foodId",
+    getFoodReviews
+);
+
 
 router.post(
     "/:orderItemId",
@@ -16,10 +25,12 @@ router.post(
     createReview
 );
 
+
 router.get(
     "/my",
     authenticate,
     getMyReviews
 );
+
 
 export default router;

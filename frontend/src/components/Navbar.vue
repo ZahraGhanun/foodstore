@@ -6,6 +6,7 @@
       🍕 FoodStore
     </div>
 
+
     <!-- Menu -->
     <ul class="menu">
 
@@ -30,6 +31,7 @@
           </RouterLink>
         </li>
 
+
         <!-- Restaurant Registration -->
         <li>
           <RouterLink to="/restaurant-register">
@@ -37,12 +39,14 @@
           </RouterLink>
         </li>
 
+
         <!-- Login -->
         <li>
           <RouterLink to="/login">
             Login
           </RouterLink>
         </li>
+
 
         <!-- Register -->
         <li>
@@ -61,18 +65,20 @@
       <template v-else>
 
         <!-- Driver Registration -->
-        <li>
+        <li v-if="!isDriver">
           <RouterLink to="/driver-register">
             🛵 Register as Driver
           </RouterLink>
         </li>
 
+
         <!-- Restaurant Registration -->
-        <li>
+        <li v-if="!isRestaurantManager">
           <RouterLink to="/restaurant-register">
             🏪 Register Restaurant
           </RouterLink>
         </li>
+
 
         <!-- Cart -->
         <li>
@@ -109,7 +115,7 @@
         <!-- Profile -->
         <li>
           <RouterLink to="/profile">
-            👤 {{ user.firstName }}
+            👤 Profile {{ user.firstName }}
           </RouterLink>
         </li>
 
@@ -176,19 +182,26 @@ const isSystemAdmin = computed(() => {
 
 <style scoped>
 
-.navbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:14px 30px;
-    background:white;
-    border-bottom:1px solid #e5e5e5;
+.navbar {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 16px 30px;
+
+  background: white;
+
+  border-bottom: 1px solid #e5e5e5;
+
 }
 
 
 .logo {
 
-  font-size: 28px;
+  font-size: 30px;
 
   font-weight: bold;
 
@@ -197,25 +210,41 @@ const isSystemAdmin = computed(() => {
 }
 
 
-.menu{
-    display:flex;
-    gap:6px;
-    list-style:none;
-    align-items:center;
-    margin:0;
-    padding:0;
-    white-space:nowrap;
+.menu {
+
+  display: flex;
+
+  gap: 12px;
+
+  list-style: none;
+
+  align-items: center;
+
+  margin: 0;
+
+  padding: 0;
+
+  white-space: nowrap;
+
 }
 
 
-.menu a{
-    text-decoration:none;
-    color:#333;
-    font-weight:600;
-    font-size:16px;
-    padding:5px 5px;
-    border-radius:6px;
-    transition:.2s;
+.menu a {
+
+  text-decoration: none;
+
+  color: #333;
+
+  font-weight: 600;
+
+  font-size: 18px;
+
+  padding: 7px 8px;
+
+  border-radius: 6px;
+
+  transition: .2s;
+
 }
 
 
@@ -235,14 +264,24 @@ const isSystemAdmin = computed(() => {
 }
 
 
-button{
-    background:none;
-    border:none;
-    cursor:pointer;
-    color:#333;
-    font-weight:600;
-    font-size:16px;
-    transition:.2s;
+button {
+
+  background: none;
+
+  border: none;
+
+  cursor: pointer;
+
+  color: #333;
+
+  font-weight: 600;
+
+  font-size: 18px;
+
+  padding: 7px 8px;
+
+  transition: .2s;
+
 }
 
 

@@ -1,7 +1,9 @@
 import * as service from "./review.service.js";
 import prisma from "../../config/prisma.js";
 
+
 export async function createReview(req, res, next) {
+
     try {
 
         const review = await service.createReview(
@@ -17,9 +19,35 @@ export async function createReview(req, res, next) {
         });
 
     } catch (error) {
+
         next(error);
+
     }
 }
+
+
+export async function getFoodReviews(req, res, next) {
+
+    try {
+
+        const result =
+            await service.getFoodReviews(
+                req.params.foodId
+            );
+
+        return res.json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+
+        next(error);
+
+    }
+}
+
+
 export async function getMyReviews(req, res, next) {
 
     try {
@@ -37,23 +65,19 @@ export async function getMyReviews(req, res, next) {
                     include: {
 
                         food: {
-
                             select: {
                                 id: true,
                                 name: true,
                                 imageUrl: true
                             }
-
                         },
 
                         order: {
-
                             select: {
                                 id: true,
                                 createdAt: true,
                                 status: true
                             }
-
                         }
 
                     }
@@ -61,12 +85,10 @@ export async function getMyReviews(req, res, next) {
                 },
 
                 restaurant: {
-
                     select: {
                         id: true,
                         name: true
                     }
-
                 }
 
             },
@@ -78,19 +100,13 @@ export async function getMyReviews(req, res, next) {
         });
 
         return res.json({
-
             success: true,
-
             data: reviews
-
         });
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
         next(error);
 
     }
-
 }

@@ -32,8 +32,23 @@ export async function getRestaurantById(id) {
                 where: {
                     isActive: true
                 },
+
                 orderBy: {
                     displayOrder: "asc"
+                },
+
+                include: {
+                    orderItems: {
+                        include: {
+                            review: {
+                                select: {
+                                    rating: true,
+                                    comment: true,
+                                    createdAt: true
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -44,6 +59,37 @@ export async function getRestaurantById(id) {
     if (!restaurant) {
         throw new Error("Restaurant not found.");
     }
+
+    restaurant.foods = restaurant.foods.map(food => {
+
+        const reviews = food.orderItems
+            .map(orderItem => orderItem.review)
+            .filter(review => review !== null);
+
+        const orderCount = food.orderItems.length;
+
+        const reviewCount = reviews.length;
+
+        const avgRating =
+            reviewCount > 0
+                ? Number(
+                    (
+                        reviews.reduce(
+                            (sum, review) => sum + review.rating,
+                            0
+                        ) / reviewCount
+                    ).toFixed(1)
+                )
+                : 0;
+
+        return {
+            ...food,
+            orderCount,
+            reviewCount,
+            avgRating
+        };
+
+    });
 
     return restaurant;
 }
