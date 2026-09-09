@@ -206,6 +206,60 @@ async function main() {
 
 
     // =================================================
+    // CUSTOMER DELIVERY ADDRESSES
+    // =================================================
+
+    for (let i = 0; i < customers.length; i++) {
+
+        const customer = customers[i];
+
+        const existingAddress =
+            await prisma.deliveryAddress.findFirst({
+
+                where: {
+                    userId: customer.id
+                }
+
+            });
+
+        if (existingAddress) {
+
+            console.log(
+                `ℹ️ Address already exists for ${customer.email}`
+            );
+
+            continue;
+
+        }
+
+        await prisma.deliveryAddress.create({
+
+            data: {
+
+                userId: customer.id,
+
+                title: "Home",
+
+                receiverName:
+                    `${customer.firstName} ${customer.lastName}`,
+
+                receiverPhone:
+                    customer.phone,
+
+                address:
+                    `Tehran, Valiasr Street, No. ${100 + i}`,
+
+                isDefault: true
+
+            }
+
+        });
+
+    }
+
+    console.log("✅ Delivery addresses created for all customers.");
+
+    // =================================================
     // RESTAURANT MANAGERS
     // =================================================
 
