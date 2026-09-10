@@ -217,3 +217,16 @@ export async function moveMyRestaurantFood(req, res, next) {
     }
 
 }
+
+export async function getPopularFoodsController(req, res, next) {
+    try {
+        const foods = await service.getPopularFoods();
+
+        return res.status(200).json({
+            success: true,
+            data: foods
+        });
+    } catch (error) {
+        next(error);
+    }
+}

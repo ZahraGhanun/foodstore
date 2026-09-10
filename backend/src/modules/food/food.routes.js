@@ -13,7 +13,8 @@ import {
     deleteMyRestaurantFood,
     getFoods,
     getMyRestaurantFoods,
-    moveMyRestaurantFood
+    moveMyRestaurantFood,
+    getPopularFoodsController
 } from "./food.controller.js";
 
 const router = Router();
@@ -63,6 +64,12 @@ router.get(
     getMyRestaurantFoods
 
 );
+
+router.get(
+    "/popular",
+    getPopularFoodsController
+);
+
 
 router.post(
 

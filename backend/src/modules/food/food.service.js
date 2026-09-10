@@ -448,3 +448,99 @@ export async function moveMyRestaurantFood(
     });
 
 }
+
+
+export async function getPopularFoods() {
+    const foods = await prisma.food.findMany({
+        where: {
+            isActive: true,
+            category: {
+                name: {
+                    notIn: [
+                        "Drinks",
+                        "Salads",
+                        "Appetizers",
+                        "Fries",
+                        "Sides",
+                        "Desserts",
+                        "Salads & Appetizers"
+                    ]
+                }
+            }
+        },
+        include: {
+            category: true,
+            orderItems: {
+                where: {
+                    order: {
+                        status: "DELIVERED"
+                    }
+                },
+                include: {
+                    review: true
+                }
+            }
+        }
+    });
+
+    const popularFoods = foods.map(food => {
+        const ratings = food.orderItems
+            .map(item => item.review?.rating)
+            .filter(rating => rating !== undefined);
+
+        const averageRating =
+            ratings.length > 0
+                ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+                : 0;
+
+        const reviewCount = ratings.length;
+
+        return {
+            id: food.id,
+            name: food.name,
+            description: food.description,
+            price: food.price,
+            imageUrl: food.imageUrl,
+            restaurantId: food.restaurantId,
+            categoryId: food.categoryId,
+            categoryName: food.category.name,
+
+            orderCount: food.orderItems.length,
+
+            reviewCount,
+
+            averageRating: Number(averageRating.toFixed(1))
+        };
+    });
+
+    const maxOrderCount = Math.max(
+        ...popularFoods.map(food => food.orderCount),
+        1
+    );
+
+    const scoredFoods = popularFoods.map(food => {
+        const orderScore =
+            food.orderCount / maxOrderCount;
+
+        const ratingScore =
+            food.averageRating / 5;
+
+        const popularityScore =
+            (orderScore * 0.7) +
+            (ratingScore * 0.3);
+
+        return {
+            ...food,
+            popularityScore: Number(
+                popularityScore.toFixed(3)
+            )
+        };
+    });
+
+    scoredFoods.sort(
+        (a, b) => b.popularityScore - a.popularityScore
+    );
+
+    return scoredFoods.slice(0, 10);
+}
+
