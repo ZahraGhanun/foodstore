@@ -87,3 +87,30 @@ export async function getOrderById(id) {
     return data;
 
 }
+
+// ---------- Recommendations ----------
+
+export async function getRecommendations() {
+
+    const response = await fetch(
+        "http://localhost:3000/api/recommendations",
+        {
+            headers: {
+                Authorization: `Bearer ${token.value}`
+            }
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message || "Failed to fetch recommendations."
+        );
+
+    }
+
+    return data;
+
+}

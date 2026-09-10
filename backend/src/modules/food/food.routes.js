@@ -14,7 +14,8 @@ import {
     getFoods,
     getMyRestaurantFoods,
     moveMyRestaurantFood,
-    getPopularFoodsController
+    getPopularFoodsController,
+    getRecommendationsController
 } from "./food.controller.js";
 
 const router = Router();
@@ -101,6 +102,12 @@ router.delete(
 
     deleteMyRestaurantFood
 
+);
+
+router.get(
+    "/recommendations",
+    authenticate,
+    getRecommendationsController
 );
 
 export default router;

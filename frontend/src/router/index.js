@@ -31,12 +31,17 @@ import AdminDashboardView
     from "../views/AdminDashboardView.vue";
 
 import MyOrdersView from "../views/MyOrdersView.vue";
-
+import RecommendationView
+    from "../views/RecommendationView.vue";
 const router = createRouter({
 
     history: createWebHistory(),
 
     routes: [
+        {
+            path: "/recommendations",
+            component: RecommendationView
+        },
         {
             path: "/orders",
             component: MyOrdersView

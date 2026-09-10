@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { addToCart as addFoodToCart } from "../services/cart.service.js";
 import FoodCard from "../components/FoodCard.vue";
 import { getRestaurantById } from "../services/restaurant.service.js";
 
 const route = useRoute();
+const router = useRouter();
 
 const restaurant = ref(null);
 const loading = ref(true);
@@ -36,6 +37,11 @@ async function addToCart(food) {
     await addFoodToCart(food.id);
 
     alert(`${food.name} added to cart.`);
+
+    // بعد از اضافه شدن موفق غذا به سبد
+    // رفتن به صفحه Recommendations
+    router.push("/recommendations");
+
   } catch (err) {
     alert(err.message);
   }

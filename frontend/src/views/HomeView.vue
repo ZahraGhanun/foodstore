@@ -49,6 +49,8 @@ async function handleAddToCart(food) {
 
     alert(`${food.name} added to cart.`);
 
+    router.push("/recommendations");
+
   } catch (error) {
     console.error("Failed to add food to cart:", error);
 

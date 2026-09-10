@@ -543,4 +543,418 @@ export async function getPopularFoods() {
 
     return scoredFoods.slice(0, 10);
 }
+export async function getRecommendations(userId) {
 
+    // --------------------------------
+    // 1. غذاهای خریداری‌شده توسط کاربر
+    // --------------------------------
+
+    const userOrderItems =
+        await prisma.orderItem.findMany({
+
+            where: {
+
+                order: {
+
+                    userId,
+
+                    status: "DELIVERED"
+
+                }
+
+            },
+
+            select: {
+
+                foodId: true
+
+            }
+
+        });
+
+
+    if (userOrderItems.length === 0) {
+
+        return {
+
+            recommendedForYou: [],
+
+            othersAlsoBought: []
+
+        };
+
+    }
+
+
+    // تعداد دفعات خرید هر غذا توسط کاربر
+    const userPurchaseCounts = {};
+
+
+    for (const item of userOrderItems) {
+
+        if (!userPurchaseCounts[item.foodId]) {
+
+            userPurchaseCounts[item.foodId] = 0;
+
+        }
+
+        userPurchaseCounts[item.foodId]++;
+
+    }
+
+
+    // غذاهای خریداری‌شده
+    const purchasedFoodIds =
+        Object.keys(userPurchaseCounts);
+
+
+    // --------------------------------
+    // 2. Recommended For You
+    // --------------------------------
+
+    const purchasedFoods =
+        await prisma.food.findMany({
+
+            where: {
+
+                id: {
+
+                    in: purchasedFoodIds
+
+                },
+
+                isActive: true
+
+            },
+
+            include: {
+
+                category: true,
+
+                orderItems: {
+
+                    where: {
+
+                        order: {
+
+                            status: "DELIVERED"
+
+                        }
+
+                    },
+
+                    include: {
+
+                        review: true
+
+                    }
+
+                }
+
+            }
+
+        });
+
+
+    // غذاهایی که خود کاربر بیشتر خریده
+    const recommendedForYou =
+        purchasedFoods
+            .map(food => {
+
+                const ratings =
+                    food.orderItems
+                        .map(
+                            item =>
+                                item.review?.rating
+                        )
+                        .filter(
+                            rating =>
+                                rating !== undefined
+                        );
+
+
+                const averageRating =
+                    ratings.length > 0
+                        ? ratings.reduce(
+                            (sum, rating) =>
+                                sum + rating,
+                            0
+                        ) / ratings.length
+                        : 0;
+
+
+                return {
+
+                    id: food.id,
+
+                    name: food.name,
+
+                    description: food.description,
+
+                    price: food.price,
+
+                    imageUrl: food.imageUrl,
+
+                    restaurantId:
+                        food.restaurantId,
+
+                    categoryId:
+                        food.categoryId,
+
+                    categoryName:
+                        food.category.name,
+
+                    orderCount:
+                        userPurchaseCounts[food.id],
+
+                    avgRating:
+                        Number(
+                            averageRating.toFixed(1)
+                        ),
+
+                    reviewCount:
+                        ratings.length
+
+                };
+
+            })
+            .sort(
+                (a, b) =>
+                    b.orderCount -
+                    a.orderCount
+            )
+            .slice(0, 5);
+
+
+    // --------------------------------
+    // 3. Others Also Bought
+    // --------------------------------
+
+    const relatedOrders =
+        await prisma.order.findMany({
+
+            where: {
+
+                status: "DELIVERED",
+
+                userId: {
+
+                    not: userId
+
+                },
+
+                orderItems: {
+
+                    some: {
+
+                        foodId: {
+
+                            in: purchasedFoodIds
+
+                        }
+
+                    }
+
+                }
+
+            },
+
+            select: {
+
+                orderItems: {
+
+                    select: {
+
+                        foodId: true
+
+                    }
+
+                }
+
+            }
+
+        });
+
+
+    // تعداد دفعاتی که هر غذا
+    // توسط خریداران مشابه خریداری شده
+    const otherPurchaseCounts = {};
+
+
+    for (const order of relatedOrders) {
+
+        // هر غذا در هر سفارش فقط یک بار
+        // به عنوان خرید مشترک حساب شود
+        const foodIdsInOrder = [
+            ...new Set(
+                order.orderItems.map(
+                    item => item.foodId
+                )
+            )
+        ];
+
+
+        for (const foodId of foodIdsInOrder) {
+
+            if (!otherPurchaseCounts[foodId]) {
+
+                otherPurchaseCounts[foodId] = 0;
+
+            }
+
+            otherPurchaseCounts[foodId]++;
+
+        }
+
+    }
+
+
+    const otherFoodIds =
+        Object.keys(otherPurchaseCounts);
+
+
+    if (otherFoodIds.length === 0) {
+
+        return {
+
+            recommendedForYou,
+
+            othersAlsoBought: []
+
+        };
+
+    }
+
+
+    // --------------------------------
+    // 4. اطلاعات غذاهای Others Also Bought
+    // --------------------------------
+
+    const otherFoods =
+        await prisma.food.findMany({
+
+            where: {
+
+                id: {
+
+                    in: otherFoodIds
+
+                },
+
+                isActive: true
+
+            },
+
+            include: {
+
+                category: true,
+
+                orderItems: {
+
+                    where: {
+
+                        order: {
+
+                            status: "DELIVERED"
+
+                        }
+
+                    },
+
+                    include: {
+
+                        review: true
+
+                    }
+
+                }
+
+            }
+
+        });
+
+
+    const othersAlsoBought =
+        otherFoods
+            .map(food => {
+
+                const ratings =
+                    food.orderItems
+                        .map(
+                            item =>
+                                item.review?.rating
+                        )
+                        .filter(
+                            rating =>
+                                rating !== undefined
+                        );
+
+
+                const averageRating =
+                    ratings.length > 0
+                        ? ratings.reduce(
+                            (sum, rating) =>
+                                sum + rating,
+                            0
+                        ) / ratings.length
+                        : 0;
+
+
+                return {
+
+                    id: food.id,
+
+                    name: food.name,
+
+                    description: food.description,
+
+                    price: food.price,
+
+                    imageUrl: food.imageUrl,
+
+                    restaurantId:
+                        food.restaurantId,
+
+                    categoryId:
+                        food.categoryId,
+
+                    categoryName:
+                        food.category.name,
+
+                    orderCount:
+                        otherPurchaseCounts[
+                        food.id
+                        ],
+
+                    avgRating:
+                        Number(
+                            averageRating.toFixed(1)
+                        ),
+
+                    reviewCount:
+                        ratings.length
+
+                };
+
+            })
+            .sort(
+                (a, b) =>
+                    b.orderCount -
+                    a.orderCount
+            )
+            .slice(0, 5);
+
+
+    // --------------------------------
+    // 5. نتیجه نهایی
+    // --------------------------------
+
+    return {
+
+        recommendedForYou,
+
+        othersAlsoBought
+
+    };
+
+}
