@@ -541,187 +541,187 @@ async function main() {
     // CREATE ORDERS
     // =====================================================
 
-    // let createdOrders = 0;
-    // let createdOrderItems = 0;
+    let createdOrders = 0;
+    let createdOrderItems = 0;
 
-    // for (const data of orderData) {
+    for (const data of orderData) {
 
-    //     // -------------------------------------------------
-    //     // CUSTOMER
-    //     // -------------------------------------------------
+        // -------------------------------------------------
+        // CUSTOMER
+        // -------------------------------------------------
 
-    //     const customer = customers[data.customer - 1];
+        const customer = customers[data.customer - 1];
 
-    //     if (!customer) {
-    //         throw new Error(
-    //             `Customer ${data.customer} not found.`
-    //         );
-    //     }
+        if (!customer) {
+            throw new Error(
+                `Customer ${data.customer} not found.`
+            );
+        }
 
 
-    //     // -------------------------------------------------
-    //     // DELIVERY ADDRESS
-    //     // -------------------------------------------------
+        // -------------------------------------------------
+        // DELIVERY ADDRESS
+        // -------------------------------------------------
 
-    //     const deliveryAddress =
-    //         await prisma.deliveryAddress.findFirst({
+        const deliveryAddress =
+            await prisma.deliveryAddress.findFirst({
 
-    //             where: {
-    //                 userId: customer.id
-    //             }
+                where: {
+                    userId: customer.id
+                }
 
-    //         });
+            });
 
-    //     if (!deliveryAddress) {
-    //         throw new Error(
-    //             `Delivery address not found for Customer ${data.customer}.`
-    //         );
-    //     }
+        if (!deliveryAddress) {
+            throw new Error(
+                `Delivery address not found for Customer ${data.customer}.`
+            );
+        }
 
 
-    //     // -------------------------------------------------
-    //     // RESTAURANT
-    //     // -------------------------------------------------
+        // -------------------------------------------------
+        // RESTAURANT
+        // -------------------------------------------------
 
-    //     const restaurant =
-    //         restaurants.find(
-    //             r => r.slug === data.restaurant
-    //         );
+        const restaurant =
+            restaurants.find(
+                r => r.slug === data.restaurant
+            );
 
-    //     if (!restaurant) {
-    //         throw new Error(
-    //             `Restaurant ${data.restaurant} not found.`
-    //         );
-    //     }
+        if (!restaurant) {
+            throw new Error(
+                `Restaurant ${data.restaurant} not found.`
+            );
+        }
 
 
-    //     // -------------------------------------------------
-    //     // FIND FOODS
-    //     // -------------------------------------------------
+        // -------------------------------------------------
+        // FIND FOODS
+        // -------------------------------------------------
 
-    //     const orderItemsData = [];
+        const orderItemsData = [];
 
-    //     let totalPrice = 0;
+        let totalPrice = 0;
 
-    //     for (const [foodName, quantity] of data.items) {
+        for (const [foodName, quantity] of data.items) {
 
-    //         const food =
-    //             await prisma.food.findFirst({
+            const food =
+                await prisma.food.findFirst({
 
-    //                 where: {
+                    where: {
 
-    //                     restaurantId:
-    //                         restaurant.id,
+                        restaurantId:
+                            restaurant.id,
 
-    //                     name:
-    //                         foodName,
+                        name:
+                            foodName,
 
-    //                     isActive: true,
+                        isActive: true,
 
-    //                     isAvailable: true
+                        isAvailable: true
 
-    //                 }
+                    }
 
-    //             });
+                });
 
-    //         if (!food) {
+            if (!food) {
 
-    //             throw new Error(
-    //                 `Food "${foodName}" not found in ${restaurant.name}.`
-    //             );
+                throw new Error(
+                    `Food "${foodName}" not found in ${restaurant.name}.`
+                );
 
-    //         }
+            }
 
 
-    //         const unitPrice =
-    //             Number(food.price);
+            const unitPrice =
+                Number(food.price);
 
-    //         totalPrice +=
-    //             unitPrice * quantity;
+            totalPrice +=
+                unitPrice * quantity;
 
 
-    //         orderItemsData.push({
+            orderItemsData.push({
 
-    //             foodId:
-    //                 food.id,
+                foodId:
+                    food.id,
 
-    //             quantity,
+                quantity,
 
-    //             unitPrice
+                unitPrice
 
-    //         });
+            });
 
-    //     }
+        }
 
 
-    //     // -------------------------------------------------
-    //     // CREATE ORDER
-    //     // -------------------------------------------------
+        // -------------------------------------------------
+        // CREATE ORDER
+        // -------------------------------------------------
 
-    //     const deliveryFee =
-    //         Number(restaurant.deliveryFee);
+        const deliveryFee =
+            Number(restaurant.deliveryFee);
 
-    //     const finalPrice =
-    //         totalPrice + deliveryFee;
+        const finalPrice =
+            totalPrice + deliveryFee;
 
 
-    //     const order =
-    //         await prisma.order.create({
+        const order =
+            await prisma.order.create({
 
-    //             data: {
+                data: {
 
-    //                 userId:
-    //                     customer.id,
+                    userId:
+                        customer.id,
 
-    //                 restaurantId:
-    //                     restaurant.id,
+                    restaurantId:
+                        restaurant.id,
 
-    //                 deliveryAddressId:
-    //                     deliveryAddress.id,
+                    deliveryAddressId:
+                        deliveryAddress.id,
 
-    //                 status:
-    //                     data.status,
+                    status:
+                        data.status,
 
-    //                 totalPrice,
+                    totalPrice,
 
-    //                 deliveryFee,
+                    deliveryFee,
 
-    //                 finalPrice,
+                    finalPrice,
 
-    //                 orderItems: {
+                    orderItems: {
 
-    //                     create:
-    //                         orderItemsData
+                        create:
+                            orderItemsData
 
-    //                 }
+                    }
 
-    //             }
+                }
 
-    //         });
+            });
 
 
-    //     createdOrders++;
+        createdOrders++;
 
-    //     createdOrderItems +=
-    //         orderItemsData.length;
+        createdOrderItems +=
+            orderItemsData.length;
 
 
-    //     console.log(
-    //         `✅ Order ${createdOrders}/${orderData.length} created - Customer ${data.customer} - ${restaurant.name}`
-    //     );
+        console.log(
+            `✅ Order ${createdOrders}/${orderData.length} created - Customer ${data.customer} - ${restaurant.name}`
+        );
 
-    // }
+    }
 
 
-    // console.log("");
+    console.log("");
 
-    // console.log(
-    //     `✅ ${createdOrders} orders created.`
-    // );
+    console.log(
+        `✅ ${createdOrders} orders created.`
+    );
 
-    // console.log(
-    //     `✅ ${createdOrderItems} order items created.`
-    // );
+    console.log(
+        `✅ ${createdOrderItems} order items created.`
+    );
 
 
 
@@ -786,7 +786,7 @@ async function main() {
     // SAFETY CHECK
     // =====================================================
 
-    if (deliveredOrderItems.length < 900) {
+    if (deliveredOrderItems.length < 3000) {
 
         throw new Error(
             `Not enough delivered order items. ` +
@@ -881,7 +881,7 @@ async function main() {
         createdReviews++;
 
         console.log(
-            `⭐ Review ${createdReviews}/900 created - Rating: ${data.rating}`
+            `⭐ Review ${createdReviews}/3000 created - Rating: ${data.rating}`
         );
 
     }

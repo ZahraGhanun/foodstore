@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
+
 import { getRecommendations } from "../services/order.service.js";
+import { addToCart } from "../services/cart.service.js";
 
 import FoodCard from "../components/FoodCard.vue";
 
@@ -9,6 +11,29 @@ const othersAlsoBought = ref([]);
 
 const loading = ref(true);
 const error = ref("");
+
+
+async function handleAddToCart(food) {
+
+    try {
+
+        await addToCart(food.id, 1);
+
+        alert(`${food.name} added to cart.`);
+
+    } catch (err) {
+
+        console.error(
+            "Failed to add food to cart:",
+            err
+        );
+
+        alert(err.message);
+
+    }
+
+}
+
 
 onMounted(async () => {
 
@@ -73,12 +98,14 @@ onMounted(async () => {
                     Foods you have ordered before.
                 </p>
 
+
                 <div class="foods">
 
                     <FoodCard
                         v-for="food in recommendedForYou"
                         :key="food.id"
                         :food="food"
+                        @add="handleAddToCart"
                     />
 
                 </div>
@@ -99,12 +126,14 @@ onMounted(async () => {
                     Other customers who bought similar foods also bought these.
                 </p>
 
+
                 <div class="foods">
 
                     <FoodCard
                         v-for="food in othersAlsoBought"
                         :key="food.id"
                         :food="food"
+                        @add="handleAddToCart"
                     />
 
                 </div>

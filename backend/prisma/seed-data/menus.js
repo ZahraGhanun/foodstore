@@ -687,17 +687,6 @@ export const restaurantMenus = [
         },
 
         {
-            name: "Dips",
-            foods: [
-                ["Cheese Sauce", "Creamy cheese sauce", 40000],
-                ["Garlic Sauce", "Creamy garlic sauce", 35000],
-                ["BBQ Sauce", "Smoky BBQ sauce", 35000],
-                ["Spicy Sauce", "Hot spicy sauce", 35000],
-                ["Ranch Sauce", "Creamy ranch sauce", 35000]
-            ]
-        },
-
-        {
             name: "Drinks",
             foods: [
                 ["Cola", "Cold Coca Cola", 40000],
