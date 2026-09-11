@@ -230,34 +230,3 @@ export async function getPopularFoodsController(req, res, next) {
         next(error);
     }
 }
-
-export async function getRecommendationsController(
-    req,
-    res,
-    next
-) {
-
-    try {
-
-        const recommendations =
-            await service.getRecommendations(
-                req.user.id
-            );
-
-        return res.status(200).json({
-
-            success: true,
-
-            data: recommendations
-
-        });
-
-    }
-
-    catch (error) {
-
-        next(error);
-
-    }
-
-}

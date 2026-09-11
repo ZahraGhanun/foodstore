@@ -14,6 +14,8 @@ import deliveryAddressRoutes
 import restaurantDashboardRoutes
     from "./modules/restaurant-dashboard/restaurant-dashboard.routes.js";
 import reviewRoutes from "./modules/review/review.routes.js";
+import recommendationRoutes
+    from "./modules/recommendation/recommendation.routes.js";
 import cors from "cors";
 
 const app = express();
@@ -43,11 +45,10 @@ app.use("/api", foodRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", restaurantRoutes);
 app.use("/api/addresses", deliveryAddressRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 
 
 // همیشه Error Middleware آخر باشد
 app.use(errorMiddleware);
 
 export default app;
-
-

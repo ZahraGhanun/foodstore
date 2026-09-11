@@ -1,406 +1,58 @@
 import prisma from "../src/config/prisma.js";
 
+import {
+    buildModel,
+    recommendCompanions
+} from "./recommendation.model.js";
+
 const K = 5;
 
 // ========================================
-// 1. گرفتن تعاملات با زمان سفارش
+// 1. Get delivered orders
 // ========================================
 
-async function getDeliveredInteractions() {
-    const orders = await prisma.order.findMany({
+async function getDeliveredOrders() {
+
+    return await prisma.order.findMany({
+
         where: {
             status: "DELIVERED"
         },
+
         select: {
+
+            id: true,
+
             userId: true,
+
             restaurantId: true,
+
             createdAt: true,
+
             orderItems: {
+
                 select: {
                     foodId: true
                 }
+
             }
+
         },
+
         orderBy: {
             createdAt: "asc"
         }
+
     });
-
-    const interactions = [];
-
-    for (const order of orders) {
-        const foodIds = [
-            ...new Set(
-                order.orderItems.map(item => item.foodId)
-            )
-        ];
-
-        for (const foodId of foodIds) {
-            interactions.push({
-                userId: order.userId,
-                restaurantId: order.restaurantId,
-                foodId,
-                createdAt: order.createdAt
-            });
-        }
-    }
-
-    return interactions;
 }
 
-
 // ========================================
-// 2. Time-based Train / Test Split
+// 2. Get food information
 // ========================================
-
-function createTrainTestSplit(interactions) {
-    const grouped = {};
-
-    for (const interaction of interactions) {
-        const key =
-            `${interaction.userId}_${interaction.restaurantId}`;
-
-        if (!grouped[key]) {
-            grouped[key] = [];
-        }
-
-        grouped[key].push(interaction);
-    }
-
-    const trainInteractions = [];
-    const testInteractions = [];
-
-    for (const key of Object.keys(grouped)) {
-        const userRestaurantInteractions =
-            grouped[key].sort(
-                (a, b) =>
-                    new Date(a.createdAt) -
-                    new Date(b.createdAt)
-            );
-
-        /*
-        حداقل دو تعامل لازم است:
-        یکی برای Train
-        یکی برای Test
-        */
-
-        if (userRestaurantInteractions.length < 2) {
-            continue;
-        }
-
-        /*
-        آخرین تعامل زمانی → Test
-        */
-
-        const testInteraction =
-            userRestaurantInteractions[
-            userRestaurantInteractions.length - 1
-            ];
-
-        testInteractions.push(testInteraction);
-
-        /*
-        تمام تعاملات قبلی → Train
-        */
-
-        for (
-            let i = 0;
-            i < userRestaurantInteractions.length - 1;
-            i++
-        ) {
-            trainInteractions.push(
-                userRestaurantInteractions[i]
-            );
-        }
-    }
-
-    return {
-        trainInteractions,
-        testInteractions
-    };
-}
-
-
-// ========================================
-// 3. ساخت Item-Based CF
-// ========================================
-
-const CATEGORY_WEIGHTS = {
-
-    MAIN: 0.90,
-
-    APPETIZER: 0.70,
-
-    SIDE: 0.70,
-
-    SALAD: 0.60,
-
-    DRINK: 0.80
-};
-
-
-function getCategoryType(categoryName) {
-
-    const name =
-        categoryName
-            .trim()
-            .toLowerCase();
-
-
-    if (name === "drinks") {
-        return "DRINK";
-    }
-
-
-    if (name === "salads") {
-        return "SALAD";
-    }
-
-
-    if (
-        name === "appetizers" ||
-        name === "salads & appetizers"
-    ) {
-        return "APPETIZER";
-    }
-
-
-    if (
-        name === "sides" ||
-        name === "fries" ||
-        name === "french fries" ||
-        name === "snacks"
-    ) {
-        return "SIDE";
-    }
-
-
-    return "MAIN";
-}
-
-
-function buildModel(trainInteractions) {
-
-    const userRestaurantFoods = {};
-
-    const restaurantFoodUsers = {};
-
-
-    // ----------------------------------------
-    // User -> Restaurant -> Foods
-    // ----------------------------------------
-
-    for (const interaction of trainInteractions) {
-
-        const {
-            userId,
-            restaurantId,
-            foodId
-        } = interaction;
-
-
-        if (!userRestaurantFoods[userId]) {
-
-            userRestaurantFoods[userId] = {};
-
-        }
-
-
-        if (
-            !userRestaurantFoods[userId][
-            restaurantId
-            ]
-        ) {
-
-            userRestaurantFoods[userId][
-                restaurantId
-            ] = new Set();
-
-        }
-
-
-        userRestaurantFoods[userId][
-            restaurantId
-        ].add(foodId);
-
-
-        // ------------------------------------
-        // Restaurant -> Food -> Users
-        // ------------------------------------
-
-        if (!restaurantFoodUsers[restaurantId]) {
-
-            restaurantFoodUsers[restaurantId] = {};
-
-        }
-
-
-        if (
-            !restaurantFoodUsers[
-            restaurantId
-            ][foodId]
-        ) {
-
-            restaurantFoodUsers[
-                restaurantId
-            ][foodId] = new Set();
-
-        }
-
-
-        restaurantFoodUsers[
-            restaurantId
-        ][foodId].add(userId);
-
-    }
-
-
-    // ----------------------------------------
-    // Similarity Matrix
-    // فقط داخل همان رستوران
-    // ----------------------------------------
-
-    const similarityMatrix = {};
-
-
-    for (
-        const restaurantId of Object.keys(
-            restaurantFoodUsers
-        )
-    ) {
-
-        similarityMatrix[
-            restaurantId
-        ] = {};
-
-
-        const foodIds =
-            Object.keys(
-                restaurantFoodUsers[
-                restaurantId
-                ]
-            );
-
-
-        for (const foodA of foodIds) {
-
-            similarityMatrix[
-                restaurantId
-            ][foodA] = {};
-
-
-            for (const foodB of foodIds) {
-
-                if (foodA === foodB) {
-                    continue;
-                }
-
-
-                const usersA =
-                    restaurantFoodUsers[
-                    restaurantId
-                    ][foodA];
-
-
-                const usersB =
-                    restaurantFoodUsers[
-                    restaurantId
-                    ][foodB];
-
-
-                let intersection = 0;
-
-
-                for (const userId of usersA) {
-
-                    if (usersB.has(userId)) {
-
-                        intersection++;
-
-                    }
-
-                }
-
-
-                const union =
-                    new Set([
-                        ...usersA,
-                        ...usersB
-                    ]).size;
-
-
-                if (union === 0) {
-                    continue;
-                }
-
-
-                const similarity =
-                    intersection / union;
-
-
-                if (similarity > 0) {
-
-                    similarityMatrix[
-                        restaurantId
-                    ][foodA][foodB] =
-                        similarity;
-
-                }
-
-            }
-
-        }
-
-    }
-
-
-    // ----------------------------------------
-    // Popularity
-    // ----------------------------------------
-
-    const popularity = {};
-
-
-    for (
-        const restaurantId of Object.keys(
-            restaurantFoodUsers
-        )
-    ) {
-
-        for (
-            const foodId of Object.keys(
-                restaurantFoodUsers[
-                restaurantId
-                ]
-            )
-        ) {
-
-            popularity[foodId] =
-                restaurantFoodUsers[
-                    restaurantId
-                ][foodId].size;
-
-        }
-
-    }
-
-
-    return {
-
-        userRestaurantFoods,
-
-        restaurantFoodUsers,
-
-        similarityMatrix,
-
-        popularity
-
-    };
-
-}
-// ========================================
-// 4. اطلاعات غذاها
-// ========================================
+//
+// Used only for displaying readable
+// evaluation results instead of UUIDs.
+//
 
 async function getFoodMap() {
 
@@ -413,349 +65,567 @@ async function getFoodMap() {
 
                 name: true,
 
-                restaurantId: true,
-
                 category: {
+
                     select: {
                         name: true
                     }
+
                 }
 
             }
 
         });
 
-
     const foodMap = {};
-
 
     for (const food of foods) {
 
-        const categoryType =
-            getCategoryType(
-                food.category.name
-            );
-
-
         foodMap[food.id] = {
 
-            ...food,
+            name:
+                food.name,
 
-            categoryType,
-
-            categoryWeight:
-                CATEGORY_WEIGHTS[
-                categoryType
-                ]
+            category:
+                food.category?.name
+                || "Unknown"
 
         };
 
     }
 
-
     return foodMap;
-
 }
+
 // ========================================
-// 5. Recommendation
+// 3. Clean baskets
+// ========================================
+//
+// Remove duplicate food IDs inside
+// the same order.
+//
+// Example:
+//
+// Pizza
+// Pizza
+// Cola
+//
+// becomes:
+//
+// Pizza
+// Cola
 // ========================================
 
-function recommendForUser(
-    userId,
-    restaurantId,
-    model,
-    foodMap,
-    limit = K
+function normalizeOrders(
+    orders
 ) {
 
-    const {
-        userRestaurantFoods,
-        restaurantFoodUsers,
-        similarityMatrix,
-        popularity
-    } = model;
+    return orders
 
+        .map(order => {
 
-    const purchasedFoods =
-        userRestaurantFoods[userId]?.[
-        restaurantId
-        ] || new Set();
+            const foodIds = [
+                ...new Set(
+                    order.orderItems
+                        .map(
+                            item =>
+                                item.foodId
+                        )
+                )
+            ];
 
+            return {
 
-    const candidateFoods =
-        Object.keys(
-            restaurantFoodUsers[
-            restaurantId
-            ] || {}
-        );
+                id:
+                    order.id,
 
+                userId:
+                    order.userId,
 
-    // ----------------------------------------
-    // اگر کاربر در این رستوران سابقه ندارد
-    // محبوب‌ترین غذاها پیشنهاد می‌شوند.
-    // ----------------------------------------
+                restaurantId:
+                    order.restaurantId,
 
-    if (purchasedFoods.size === 0) {
+                createdAt:
+                    order.createdAt,
 
-        return candidateFoods
-
-            .sort(
-                (a, b) =>
-                    (
-                        popularity[b] || 0
-                    ) -
-                    (
-                        popularity[a] || 0
+                orderItems:
+                    foodIds.map(
+                        foodId => ({
+                            foodId
+                        })
                     )
-            )
 
-            .slice(0, limit)
+            };
 
-            .map(
-                foodId =>
-                    foodId
-            );
+        })
 
+        .filter(
+            order =>
+                order.orderItems.length > 0
+        );
+}
+
+// ========================================
+// 4. Time-based basket split
+// ========================================
+//
+// We split by ORDER/BASKET,
+// not by individual food.
+//
+// For every:
+//
+// user + restaurant
+//
+// the last order becomes TEST.
+//
+// Previous orders become TRAIN.
+//
+// Example:
+//
+// User A
+// Restaurant X
+//
+// Order 1 -> TRAIN
+// Order 2 -> TRAIN
+// Order 3 -> TRAIN
+// Order 4 -> TEST
+// ========================================
+
+function createBasketTrainTestSplit(
+    orders
+) {
+
+    const grouped = {};
+
+    for (const order of orders) {
+
+        const key =
+            `${order.userId}_${order.restaurantId}`;
+
+        if (!grouped[key]) {
+
+            grouped[key] = [];
+
+        }
+
+        grouped[key].push(
+            order
+        );
     }
 
+    const trainOrders = [];
+    const testOrders = [];
 
-    // ----------------------------------------
-    // امتیازدهی
-    // ----------------------------------------
+    for (
+        const key
+        of Object.keys(grouped)
+    ) {
 
-    const scoredFoods = [];
+        const userRestaurantOrders =
+            grouped[key].sort(
+                (a, b) =>
+                    new Date(
+                        a.createdAt
+                    ) -
+                    new Date(
+                        b.createdAt
+                    )
+            );
 
-
-    for (const candidateFood of candidateFoods) {
-
-        let score = 0;
-
-
-        for (
-            const purchasedFood
-            of purchasedFoods
+        // Need at least two baskets.
+        if (
+            userRestaurantOrders.length < 2
         ) {
 
-            const similarity =
-                similarityMatrix[
-                restaurantId
-                ]?.[
-                purchasedFood
-                ]?.[
-                candidateFood
-                ] || 0;
-
-
-            const categoryWeight =
-                foodMap[
-                    candidateFood
-                ]?.categoryWeight || 1;
-
-
-            score +=
-                similarity *
-                categoryWeight;
+            continue;
 
         }
 
+        const testOrder =
+            userRestaurantOrders[
+            userRestaurantOrders.length - 1
+            ];
 
-        scoredFoods.push({
+        testOrders.push(
+            testOrder
+        );
 
-            foodId:
-                candidateFood,
+        for (
+            let i = 0;
+            i <
+            userRestaurantOrders.length - 1;
+            i++
+        ) {
 
-            score,
-
-            popularity:
-                popularity[
-                candidateFood
-                ] || 0
-
-        });
-
-    }
-
-
-    // ----------------------------------------
-    // مرتب‌سازی
-    // اول Score
-    // سپس Popularity
-    // ----------------------------------------
-
-    scoredFoods.sort(
-        (a, b) => {
-
-            if (b.score !== a.score) {
-
-                return (
-                    b.score -
-                    a.score
-                );
-
-            }
-
-
-            return (
-                b.popularity -
-                a.popularity
+            trainOrders.push(
+                userRestaurantOrders[i]
             );
 
         }
-    );
 
-
-    return scoredFoods
-
-        .slice(0, limit)
-
-        .map(
-            item =>
-                item.foodId
-        );
-
-}
-// ========================================
-// 6. Precision@5 / Recall@5
-// ========================================
-
-function calculateMetrics(
-    recommendations,
-    actualFoodId
-) {
-    const hit =
-        recommendations.includes(actualFoodId);
+    }
 
     return {
-        precision: hit ? 1 / K : 0,
-        recall: hit ? 1 : 0,
-        hit
+
+        trainOrders,
+
+        testOrders
+
     };
 }
 
+// ========================================
+// 5. Calculate basket metrics
+// ========================================
+//
+// Example:
+//
+// Test basket:
+//
+// Pizza + Doogh + Cola
+//
+// Trigger:
+//
+// Pizza
+//
+// Expected companions:
+//
+// Doogh
+// Cola
+//
+// Recommendation:
+//
+// Doogh
+// Cola
+// Salad
+// Water
+// Fries
+//
+// Hits = 2
+//
+// Precision = 2 / 5
+//
+// Recall = 2 / 2
+// ========================================
+
+function calculateBasketMetrics(
+    recommendations,
+    expectedFoods
+) {
+
+    const expected =
+        new Set(
+            expectedFoods
+        );
+
+    const hits =
+        recommendations.filter(
+            foodId =>
+                expected.has(
+                    foodId
+                )
+        );
+
+    const precision =
+        recommendations.length > 0
+
+            ? hits.length /
+            recommendations.length
+
+            : 0;
+
+    const recall =
+        expected.size > 0
+
+            ? hits.length /
+            expected.size
+
+            : 0;
+
+    return {
+
+        hits:
+            hits.length,
+
+        precision,
+
+        recall
+
+    };
+}
 
 // ========================================
-// 7. Evaluation
+// 6. Evaluation
 // ========================================
 
 async function evaluate() {
-    console.log("\n========================================");
-    console.log("FOODSTORE MODEL EVALUATION");
-    console.log("TIME-BASED SPLIT");
-    console.log("Precision@5 / Recall@5");
-    console.log("========================================\n");
-
-    const interactions =
-        await getDeliveredInteractions();
 
     console.log(
-        "Total interactions:",
-        interactions.length
-    );
-
-    const {
-        trainInteractions,
-        testInteractions
-    } = createTrainTestSplit(interactions);
-
-    console.log(
-        "Training interactions:",
-        trainInteractions.length
+        "\n========================================"
     );
 
     console.log(
-        "Test interactions:",
-        testInteractions.length
+        "FOODSTORE BASKET RECOMMENDATION EVALUATION"
     );
 
     console.log(
-        "\nBuilding Item-Based CF model..."
+        "ITEM-BASED CF + CO-PURCHASE"
     );
 
-    const model =
-        buildModel(trainInteractions);
+    console.log(
+        "TIME-BASED BASKET SPLIT"
+    );
+
+    console.log(
+        "PRECISION@5 / RECALL@5"
+    );
+
+    console.log(
+        "========================================\n"
+    );
+
+    // ====================================
+    // Load orders
+    // ====================================
+
+    console.log(
+        "Loading delivered orders..."
+    );
+
+    const rawOrders =
+        await getDeliveredOrders();
+
+    const orders =
+        normalizeOrders(
+            rawOrders
+        );
+
+    console.log(
+        "Delivered baskets:",
+        orders.length
+    );
+
+    // ====================================
+    // Load food names
+    // ====================================
+
+    console.log(
+        "Loading food information..."
+    );
 
     const foodMap =
         await getFoodMap();
 
     console.log(
-        "Training foods:",
-        new Set(
-            Object.values(
-                model.restaurantFoodUsers
-            )
-                .flatMap(
-                    foods =>
-                        Object.keys(foods)
-                )
-        ).size
+        "Foods loaded:",
+        Object.keys(
+            foodMap
+        ).length
     );
 
+    // ====================================
+    // Train / Test split
+    // ====================================
+
+    const {
+        trainOrders,
+        testOrders
+    } =
+        createBasketTrainTestSplit(
+            orders
+        );
+
+    console.log(
+        "Training baskets:",
+        trainOrders.length
+    );
+
+    console.log(
+        "Test baskets:",
+        testOrders.length
+    );
+
+    // ====================================
+    // Build model
+    // ====================================
+
+    console.log(
+        "\nBuilding recommendation model..."
+    );
+
+    const model =
+        buildModel(
+            trainOrders
+        );
+
+    console.log(
+        "Model built successfully."
+    );
+
+    // ====================================
+    // Evaluation variables
+    // ====================================
+
     let totalPrecision = 0;
+
     let totalRecall = 0;
-    let hits = 0;
+
+    let totalHits = 0;
+
+    let evaluationSamples = 0;
 
     const results = [];
 
-    for (const test of testInteractions) {
-        const recommendations =
-            recommendForUser(
-                test.userId,
-                test.restaurantId,
-                model,
-                foodMap,
-                K
+    // ====================================
+    // Evaluate test baskets
+    // ====================================
+
+    for (
+        const testOrder
+        of testOrders
+    ) {
+
+        const testFoodIds =
+            testOrder.orderItems.map(
+                item =>
+                    item.foodId
             );
 
-        const metrics =
-            calculateMetrics(
-                recommendations,
-                test.foodId
-            );
+        // A basket containing only one
+        // food cannot evaluate companions.
+        if (
+            testFoodIds.length < 2
+        ) {
 
-        totalPrecision += metrics.precision;
-        totalRecall += metrics.recall;
+            continue;
 
-        if (metrics.hit) {
-            hits++;
         }
 
-        results.push({
-            ...test,
-            recommendations,
-            hit: metrics.hit
-        });
+        // =================================
+        // Each food becomes a trigger.
+        // =================================
+
+        for (
+            const triggerFoodId
+            of testFoodIds
+        ) {
+
+            const expectedFoods =
+                testFoodIds.filter(
+                    foodId =>
+                        foodId !==
+                        triggerFoodId
+                );
+
+            // =================================
+            // Get companion recommendations
+            // =================================
+
+            const recommendations =
+                recommendCompanions(
+
+                    testOrder.restaurantId,
+
+                    [
+                        triggerFoodId
+                    ],
+
+                    model,
+
+                    K
+
+                );
+
+            // =================================
+            // Calculate metrics
+            // =================================
+
+            const metrics =
+                calculateBasketMetrics(
+
+                    recommendations,
+
+                    expectedFoods
+
+                );
+
+            totalPrecision +=
+                metrics.precision;
+
+            totalRecall +=
+                metrics.recall;
+
+            totalHits +=
+                metrics.hits;
+
+            evaluationSamples++;
+
+            results.push({
+
+                userId:
+                    testOrder.userId,
+
+                restaurantId:
+                    testOrder.restaurantId,
+
+                triggerFoodId,
+
+                expectedFoods,
+
+                recommendations,
+
+                precision:
+                    metrics.precision,
+
+                recall:
+                    metrics.recall
+
+            });
+
+        }
+
     }
 
-    const testCount =
-        testInteractions.length;
+    // ========================================
+    // Final metrics
+    // ========================================
 
     const precisionAt5 =
-        testCount > 0
-            ? totalPrecision / testCount
+        evaluationSamples > 0
+
+            ? totalPrecision /
+            evaluationSamples
+
             : 0;
 
     const recallAt5 =
-        testCount > 0
-            ? totalRecall / testCount
+        evaluationSamples > 0
+
+            ? totalRecall /
+            evaluationSamples
+
             : 0;
 
-    console.log("\n========================================");
-    console.log("EVALUATION RESULTS");
-    console.log("========================================\n");
+    console.log(
+        "\n========================================"
+    );
+
+    console.log(
+        "EVALUATION RESULTS"
+    );
+
+    console.log(
+        "========================================\n"
+    );
 
     console.log(
         "Evaluation samples:",
-        testCount
+        evaluationSamples
     );
 
     console.log(
-        "Hits:",
-        hits
-    );
-
-    console.log(
-        "Hit Rate:",
-        `${((hits / testCount) * 100).toFixed(2)}%`
+        "Total hits:",
+        totalHits
     );
 
     console.log(
@@ -768,54 +638,183 @@ async function evaluate() {
         recallAt5.toFixed(4)
     );
 
-    console.log("\n========================================");
+    // ========================================
+    // Sample results
+    // ========================================
+    //
+    // IMPORTANT:
+    //
+    // We print names instead of UUIDs
+    // so we can inspect the quality of
+    // companion recommendations.
+    // ========================================
 
-    console.log("\nSAMPLE EVALUATIONS");
-    console.log("========================================\n");
+    console.log(
+        "\n========================================"
+    );
 
-    for (const result of results.slice(0, 5)) {
+    console.log(
+        "SAMPLE COMPANION RECOMMENDATIONS"
+    );
+
+    console.log(
+        "========================================\n"
+    );
+
+    for (
+        const result
+        of results.slice(0, 10)
+    ) {
+
+        const triggerFood =
+            foodMap[
+            result.triggerFoodId
+            ];
+
         console.log(
-            "User:",
-            result.userId
+            "Trigger Food:",
+            triggerFood?.name
+            || result.triggerFoodId
         );
 
         console.log(
-            "Actual Food:",
-            foodMap[result.foodId]?.name
-            || result.foodId
+            "Trigger Category:",
+            triggerFood?.category
+            || "Unknown"
         );
 
-        console.log("Recommendations:");
+        // =================================
+        // Expected companions
+        // =================================
 
-        for (const foodId of result.recommendations) {
+        console.log(
+            "Expected companions:"
+        );
+
+        for (
+            const foodId
+            of result.expectedFoods
+        ) {
+
+            const food =
+                foodMap[foodId];
+
             console.log(
+
                 " -",
-                foodMap[foodId]?.name
-                || foodId
+
+                food?.name
+                || foodId,
+
+                food?.category
+                    ? `(${food.category})`
+                    : ""
+
             );
+
         }
 
+        // =================================
+        // Recommendations
+        // =================================
+
         console.log(
-            "Hit:",
-            result.hit ? "YES" : "NO"
+            "Recommendations:"
         );
 
-        console.log("----------------------------------------");
-    }
-}
+        for (
+            const foodId
+            of result.recommendations
+        ) {
 
+            const food =
+                foodMap[foodId];
+
+            console.log(
+
+                " -",
+
+                food?.name
+                || foodId,
+
+                food?.category
+                    ? `(${food.category})`
+                    : ""
+
+            );
+
+        }
+
+        // =================================
+        // Metrics for this sample
+        // =================================
+
+        console.log(
+            "Precision:",
+            result.precision.toFixed(4)
+        );
+
+        console.log(
+            "Recall:",
+            result.recall.toFixed(4)
+        );
+
+        console.log(
+            "----------------------------------------"
+        );
+
+    }
+
+    // ========================================
+    // Summary
+    // ========================================
+
+    console.log(
+        "\n========================================"
+    );
+
+    console.log(
+        "SUMMARY"
+    );
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        `Precision@${K}:`,
+        precisionAt5.toFixed(4)
+    );
+
+    console.log(
+        `Recall@${K}:`,
+        recallAt5.toFixed(4)
+    );
+
+    console.log(
+        "========================================\n"
+    );
+}
 
 // ========================================
 // Run
 // ========================================
 
 evaluate()
+
     .catch(error => {
+
         console.error(
             "Evaluation failed:",
             error
         );
+
     })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+
+    .finally(
+        async () => {
+
+            await prisma.$disconnect();
+
+        }
+    );
