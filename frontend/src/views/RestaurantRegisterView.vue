@@ -3,6 +3,8 @@ import { ref } from "vue";
 
 import { createRequest } from "../services/restaurant-registration.service.js";
 
+const isLoggedIn = !!localStorage.getItem("token");
+
 const form = ref({
     restaurantName: "",
     phone: "",
@@ -51,13 +53,31 @@ async function submitRestaurantRequest() {
 
     <div class="container">
 
+        <!-- Login Warning -->
+        <div
+            v-if="!isLoggedIn"
+            class="login-warning"
+        >
+            You must be logged in to complete the restaurant registration form.
+
+            <RouterLink to="/login">
+                Login
+            </RouterLink>
+        </div>
+
+
         <h1>Register Your Restaurant</h1>
 
         <p class="description">
             Submit your restaurant information for admin approval.
         </p>
 
-        <form @submit.prevent="submitRestaurantRequest">
+
+        <!-- Registration Form -->
+        <form
+            v-if="isLoggedIn"
+            @submit.prevent="submitRestaurantRequest"
+        >
 
             <label>
                 Restaurant Name
@@ -69,6 +89,7 @@ async function submitRestaurantRequest() {
                 placeholder="Restaurant name"
             />
 
+
             <label>
                 Phone
             </label>
@@ -78,6 +99,7 @@ async function submitRestaurantRequest() {
                 type="text"
                 placeholder="09xxxxxxxxx"
             />
+
 
             <label>
                 Address
@@ -89,6 +111,7 @@ async function submitRestaurantRequest() {
                 rows="4"
             ></textarea>
 
+
             <label>
                 Description
             </label>
@@ -98,6 +121,7 @@ async function submitRestaurantRequest() {
                 placeholder="Restaurant description (optional)"
                 rows="3"
             ></textarea>
+
 
             <button
                 type="submit"
@@ -110,12 +134,14 @@ async function submitRestaurantRequest() {
                 }}
             </button>
 
+
             <p
                 v-if="success"
                 class="success"
             >
                 {{ success }}
             </p>
+
 
             <p
                 v-if="error"
@@ -137,10 +163,36 @@ async function submitRestaurantRequest() {
     margin: 60px auto;
 }
 
+
+/* Login Warning */
+
+.login-warning {
+    padding: 14px 18px;
+    margin-bottom: 25px;
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    border-radius: 8px;
+    color: #664d03;
+    font-weight: 500;
+}
+
+.login-warning a {
+    margin-left: 6px;
+    color: #42b883;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.login-warning a:hover {
+    text-decoration: underline;
+}
+
+
 .description {
     color: #666;
     margin-bottom: 25px;
 }
+
 
 form {
     display: flex;
@@ -148,9 +200,11 @@ form {
     gap: 12px;
 }
 
+
 label {
     font-weight: 600;
 }
+
 
 input,
 textarea {
@@ -162,6 +216,7 @@ textarea {
     resize: vertical;
 }
 
+
 button {
     padding: 12px;
     border: none;
@@ -172,14 +227,17 @@ button {
     font-size: 15px;
 }
 
+
 button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
+
 .success {
     color: green;
 }
+
 
 .error {
     color: red;

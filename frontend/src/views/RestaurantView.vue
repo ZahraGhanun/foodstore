@@ -129,10 +129,10 @@ function foodsForCategory(categoryId) {
 
   </div>
 </template>
-
 <style scoped>
+
 .container {
-  max-width: 1100px;
+  max-width: 1220px;
   margin: 40px auto;
   padding: 20px;
 }
@@ -156,9 +156,10 @@ function foodsForCategory(categoryId) {
 }
 
 .foods {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 280px);
   gap: 24px;
   margin-top: 20px;
 }
+
 </style>

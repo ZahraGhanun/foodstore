@@ -8,11 +8,17 @@
 
     <div class="content">
 
-      <h3>{{ food.name }}</h3>
+      <h3>
+        {{ food.name }}
+      </h3>
 
-      <p>{{ food.description }}</p>
+      <p class="description">
+        {{ food.description || "No description available." }}
+      </p>
 
-      <h4>{{ food.price }} تومان</h4>
+      <h4>
+        {{ food.price }} تومان
+      </h4>
 
       <div class="food-stats">
 
@@ -33,7 +39,10 @@
 
       </div>
 
-      <button @click="$emit('add', food)">
+      <button
+        class="add-to-cart-button"
+        @click="$emit('add', food)"
+      >
         Add To Cart
       </button>
 
@@ -70,13 +79,19 @@ function goToReviews() {
 
     width: 280px;
 
+    height: 470px;
+
+    display: flex;
+
+    flex-direction: column;
+
     background: white;
 
     border-radius: 14px;
 
     overflow: hidden;
 
-    box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
 
 }
 
@@ -86,13 +101,79 @@ img {
 
     height: 180px;
 
+    flex-shrink: 0;
+
     object-fit: cover;
 
 }
 
 .content {
 
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
     padding: 16px;
+
+    min-height: 0;
+
+}
+
+h3 {
+
+    height: 48px;
+
+    margin: 0 0 8px;
+
+    font-size: 18px;
+
+    line-height: 24px;
+
+    display: -webkit-box;
+
+    -webkit-line-clamp: 2;
+
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+
+}
+
+.description {
+
+    height: 54px;
+
+    margin: 0 0 12px;
+
+    font-size: 14px;
+
+    line-height: 18px;
+
+    color: #666;
+
+    display: -webkit-box;
+
+    -webkit-line-clamp: 3;
+
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+
+}
+
+h4 {
+
+    height: 24px;
+
+    margin: 0 0 8px;
+
+    font-size: 17px;
+
+    line-height: 24px;
+
+    color: #333;
 
 }
 
@@ -104,7 +185,9 @@ img {
 
     gap: 6px;
 
-    margin: 12px 0;
+    height: 78px;
+
+    margin: 4px 0 12px;
 
     font-size: 14px;
 
@@ -130,9 +213,13 @@ img {
 
 }
 
-button:not(.reviews-button) {
+.add-to-cart-button {
 
     width: 100%;
+
+    height: 44px;
+
+    flex-shrink: 0;
 
     padding: 12px;
 
@@ -145,6 +232,12 @@ button:not(.reviews-button) {
     background: #42b883;
 
     color: white;
+
+}
+
+.add-to-cart-button:hover {
+
+    background: #369f70;
 
 }
 

@@ -95,29 +95,15 @@ const goToRestaurantRegister = () => {
 
           <button
             class="primary-button"
-            @click="router.push('/restaurants')"
+            @click="goToDriverRegister"
           >
-            Explore Restaurants
+            Become a Driver
           </button>
 
           <button
             class="secondary-button"
-            @click="router.push('/restaurants')"
+            @click="goToRestaurantRegister"
           >
-            Browse Foods
-          </button>
-
-        </div>
-
-        <div class="partner-links">
-
-          <button @click="goToDriverRegister">
-            Become a Driver
-          </button>
-
-          <span>•</span>
-
-          <button @click="goToRestaurantRegister">
             Register Your Restaurant
           </button>
 
@@ -215,7 +201,6 @@ const goToRestaurantRegister = () => {
         </p>
 
       </div>
-
 
     </div>
 
@@ -376,41 +361,6 @@ const goToRestaurantRegister = () => {
 
 .secondary-button:hover {
   background: #f0faf5;
-}
-
-
-.partner-links {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  margin-top: 20px;
-
-  font-size: 13px;
-
-  color: #999;
-}
-
-
-.partner-links button {
-  border: none;
-
-  background: none;
-
-  padding: 0;
-
-  color: #777;
-
-  cursor: pointer;
-
-  font-size: 13px;
-}
-
-
-.partner-links button:hover {
-  color: #42b883;
 }
 
 
@@ -614,13 +564,6 @@ const goToRestaurantRegister = () => {
 
   .hero-actions {
     justify-content: center;
-  }
-
-
-  .partner-links {
-    justify-content: center;
-
-    flex-wrap: wrap;
   }
 
 

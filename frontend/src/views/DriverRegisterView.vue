@@ -6,6 +6,8 @@ import { createDriverRequest } from "../services/driver-registration.service.js"
 
 const router = useRouter();
 
+const isLoggedIn = !!localStorage.getItem("token");
+
 const form = ref({
     vehicleType: "",
     licensePlate: ""
@@ -55,13 +57,31 @@ async function submitDriverRequest() {
 
     <div class="container">
 
+        <!-- Login Warning -->
+        <div
+            v-if="!isLoggedIn"
+            class="login-warning"
+        >
+            You must be logged in to complete the driver registration form.
+
+            <RouterLink to="/login">
+                Login
+            </RouterLink>
+        </div>
+
+
         <h1>Register as Driver</h1>
 
         <p class="description">
             Submit your information to become a FoodStore driver.
         </p>
 
-        <form @submit.prevent="submitDriverRequest">
+
+        <!-- Registration Form -->
+        <form
+            v-if="isLoggedIn"
+            @submit.prevent="submitDriverRequest"
+        >
 
             <label>
                 Vehicle Type
@@ -83,6 +103,7 @@ async function submitDriverRequest() {
 
             </select>
 
+
             <label>
                 License Plate
             </label>
@@ -92,6 +113,7 @@ async function submitDriverRequest() {
                 placeholder="Enter license plate"
             />
 
+
             <button
                 type="submit"
                 :disabled="loading"
@@ -99,12 +121,14 @@ async function submitDriverRequest() {
                 {{ loading ? "Submitting..." : "Submit Request" }}
             </button>
 
+
             <p
                 v-if="success"
                 class="success"
             >
                 {{ success }}
             </p>
+
 
             <p
                 v-if="error"
@@ -126,10 +150,36 @@ async function submitDriverRequest() {
     margin: 60px auto;
 }
 
+
+/* Login Warning */
+
+.login-warning {
+    padding: 14px 18px;
+    margin-bottom: 25px;
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    border-radius: 8px;
+    color: #664d03;
+    font-weight: 500;
+}
+
+.login-warning a {
+    margin-left: 6px;
+    color: #42b883;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.login-warning a:hover {
+    text-decoration: underline;
+}
+
+
 .description {
     color: #666;
     margin-bottom: 25px;
 }
+
 
 form {
     display: flex;
@@ -137,9 +187,11 @@ form {
     gap: 12px;
 }
 
+
 label {
     font-weight: 600;
 }
+
 
 input,
 select {
@@ -148,6 +200,7 @@ select {
     border-radius: 8px;
     font-size: 15px;
 }
+
 
 button {
     padding: 12px;
@@ -159,14 +212,17 @@ button {
     font-size: 15px;
 }
 
+
 button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
+
 .success {
     color: green;
 }
+
 
 .error {
     color: red;

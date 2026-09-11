@@ -24,21 +24,6 @@
 
       <template v-if="!user">
 
-        <!-- Driver Registration -->
-        <li>
-          <RouterLink to="/driver-register">
-            🛵 Register as Driver
-          </RouterLink>
-        </li>
-
-
-        <!-- Restaurant Registration -->
-        <li>
-          <RouterLink to="/restaurant-register">
-            🏪 Register Restaurant
-          </RouterLink>
-        </li>
-
 
         <!-- Login -->
         <li>
@@ -64,20 +49,6 @@
 
       <template v-else>
 
-        <!-- Driver Registration -->
-        <li v-if="!isDriver">
-          <RouterLink to="/driver-register">
-            🛵 Register as Driver
-          </RouterLink>
-        </li>
-
-
-        <!-- Restaurant Registration -->
-        <li v-if="!isRestaurantManager">
-          <RouterLink to="/restaurant-register">
-            🏪 Register Restaurant
-          </RouterLink>
-        </li>
 
 
         <!-- Cart -->
