@@ -13,11 +13,11 @@ const K = 5;
 // Food Map
 // =====================================================
 
-// اطلاعات کامل غذاها برای ارسال به Frontend
 async function getFoodMap() {
 
     const foods =
         await prisma.food.findMany({
+
             where: {
                 isActive: true
             },
@@ -62,7 +62,6 @@ async function getFoodMap() {
 // Food Statistics
 // =====================================================
 
-// اضافه کردن میانگین امتیاز و تعداد Review به غذاها
 async function addFoodStats(foodList) {
 
     if (foodList.length === 0) {
@@ -166,9 +165,95 @@ async function addFoodStats(foodList) {
 
 export async function getRecommendations(userId) {
 
+    // =================================================
+    // 1. Cart فعلی کاربر
+    // =================================================
+
+    const cart =
+        await prisma.cart.findUnique({
+
+            where: {
+                userId
+            },
+
+            include: {
+
+                cartItems: {
+                    include: {
+                        food: true
+                    }
+                },
+
+                restaurant: true
+            }
+        });
+
+
     // -------------------------------------------------
-    // 1. سفارش‌های تحویل‌شده
+    // اگر Cart وجود نداشته باشد
     // -------------------------------------------------
+
+    if (!cart) {
+
+        return {
+            recommendedForYou: [],
+            othersAlsoBought: []
+        };
+
+    }
+
+
+    // -------------------------------------------------
+    // اگر Cart خالی باشد
+    // -------------------------------------------------
+
+    if (
+        cart.cartItems.length === 0 ||
+        !cart.restaurantId
+    ) {
+
+        return {
+            recommendedForYou: [],
+            othersAlsoBought: []
+        };
+
+    }
+
+
+    const restaurantId =
+        cart.restaurantId;
+
+
+    console.log(
+        "Recommendation userId:",
+        userId
+    );
+
+
+    console.log(
+        "Recommendation restaurantId:",
+        restaurantId
+    );
+
+
+    console.log(
+        "Cart items:",
+        cart.cartItems.map(
+            item => ({
+                foodId: item.foodId,
+                foodName: item.food?.name,
+                foodRestaurantId:
+                    item.food?.restaurantId
+            })
+        )
+    );
+
+
+    // =================================================
+    // 2. سفارش‌های تحویل‌شده
+    //
+    // این داده‌ها برای آموزش Model هستند.
+    // =================================================
 
     const orders =
         await prisma.order.findMany({
@@ -188,21 +273,29 @@ export async function getRecommendations(userId) {
                 createdAt: true,
 
                 orderItems: {
+
                     select: {
-                        foodId: true
+
+                        foodId: true,
+
+                        food: {
+                            select: {
+                                restaurantId: true
+                            }
+                        }
+
                     }
+
                 }
+
             },
 
             orderBy: {
                 createdAt: "asc"
             }
+
         });
 
-
-    // -------------------------------------------------
-    // 2. اگر هیچ سفارش تحویل‌شده‌ای وجود نداشت
-    // -------------------------------------------------
 
     if (orders.length === 0) {
 
@@ -214,9 +307,9 @@ export async function getRecommendations(userId) {
     }
 
 
-    // -------------------------------------------------
+    // =================================================
     // 3. ساخت Model
-    // -------------------------------------------------
+    // =================================================
 
     const model =
         buildModel(orders);
@@ -226,249 +319,53 @@ export async function getRecommendations(userId) {
         await getFoodMap();
 
 
-    // -------------------------------------------------
-    // 4. سفارش‌های تحویل‌شده کاربر
-    // -------------------------------------------------
+    // =================================================
+    // 4. سفارش‌های قبلی همین کاربر
+    //    فقط در همان Restaurant فعلی Cart
+    // =================================================
 
     const userOrders =
-        orders.filter(
-            order =>
-                order.userId === userId
+        orders.filter(order =>
+            order.userId === userId &&
+            order.restaurantId === restaurantId
         );
 
 
     console.log(
-        "Recommendation userId:",
-        userId
-    );
-
-
-    console.log(
-        "User delivered orders:",
+        "User orders in current restaurant:",
         userOrders.length
     );
 
 
-    // -------------------------------------------------
-    // اگر کاربر هیچ سفارش تحویل‌شده‌ای ندارد
-    // -------------------------------------------------
-
-    if (userOrders.length === 0) {
-
-        return {
-            recommendedForYou: [],
-            othersAlsoBought: []
-        };
-
-    }
-
-
-    // -------------------------------------------------
-    // 5. رستوران‌هایی که کاربر از آن‌ها خرید کرده
-    // -------------------------------------------------
-
-    const restaurantIds = [
-        ...new Set(
-            userOrders.map(
-                order =>
-                    order.restaurantId
-            )
-        )
-    ];
-
-
     // =================================================
-    // 6. Recommended For You
+    // 5. Recommended For You
     // =================================================
     //
-    // برای هر رستوران، recommendation جداگانه
-    // ساخته می‌شود.
-    //
-    // نکته مهم:
-    // غذای پیشنهادی باید حتماً متعلق به همان
-    // رستورانی باشد که recommendation برای آن
-    // ساخته شده است.
+    // بر اساس سابقه خود کاربر
+    // در همین Restaurant.
     // =================================================
 
-    const recommendedMap =
-        new Map();
-
-
-    for (
-        const restaurantId
-        of restaurantIds
-    ) {
-
-        const recommendations =
-            recommendForUser(
-                userId,
-                restaurantId,
-                model,
-                K
-            );
-
-
-        // Model فعلاً فقط Food ID برمی‌گرداند
-        for (
-            const foodId
-            of recommendations
-        ) {
-
-            const food =
-                foodMap.get(foodId);
-
-
-            // اگر غذا در Food Map نبود
-            if (!food) {
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // بررسی مهم:
-            // غذا باید متعلق به همان رستورانی باشد
-            // که recommendation برای آن ساخته شده.
-            // -------------------------------------------------
-
-            if (
-                food.restaurantId !== restaurantId
-            ) {
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // جلوگیری از تکرار غذا
-            // -------------------------------------------------
-
-            if (
-                recommendedMap.has(food.id)
-            ) {
-                continue;
-            }
-
-
-            recommendedMap.set(
-                food.id,
-                {
-                    ...food,
-
-                    /*
-                     * Model فعلاً فقط Food ID
-                     * برمی‌گرداند.
-                     *
-                     * بنابراین Score واقعی در
-                     * این لایه در دسترس نیست.
-                     */
-
-                    score: 1,
-
-                    /*
-                     * از restaurantId واقعی خود Food
-                     * استفاده می‌کنیم.
-                     */
-
-                    restaurantId:
-                        food.restaurantId,
-
-                    recommendationType:
-                        "personal"
-                }
-            );
-
-        }
-
-    }
-
-
-    // -------------------------------------------------
-    // مرتب‌سازی و محدود کردن پیشنهادهای شخصی
-    // -------------------------------------------------
-
-    let recommendedForYou = [
-        ...recommendedMap.values()
-    ]
-        .sort(
-            (a, b) =>
-                b.score - a.score
-        )
-        .slice(0, K);
-
-
-    console.log(
-        "Personal recommendation candidates:",
-        recommendedMap.size
-    );
-
-
-    console.log(
-        "Personal recommendations:",
-        recommendedForYou.length
-    );
-
-
-    // اضافه کردن Rating و Review Count
-    recommendedForYou =
-        await addFoodStats(
-            recommendedForYou
+    const recommendations =
+        recommendForUser(
+            userId,
+            restaurantId,
+            model,
+            K
         );
 
 
-    // =================================================
-    // 7. Others Also Bought
-    // =================================================
-    //
-    // غذاهای خریداری‌شده توسط کاربر Trigger هستند.
-    //
-    // برای هر Trigger:
-    //   restaurantId + foodId
-    //
-    // Model غذاهایی را پیشنهاد می‌دهد که در همان
-    // رستوران معمولاً همراه Trigger خریداری شده‌اند.
-    // =================================================
-
-    const triggerFoods = [];
-
-
-    for (const order of userOrders) {
-
-        for (
-            const item
-            of order.orderItems
-        ) {
-
-            if (
-                !triggerFoods.includes(
-                    item.foodId
-                )
-            ) {
-
-                triggerFoods.push(
-                    item.foodId
-                );
-
-            }
-
-        }
-
-    }
-
-
-    // -------------------------------------------------
-    // جمع‌آوری Companionها
-    // -------------------------------------------------
-
-    const companionMap =
-        new Map();
+    const recommendedForYou = [];
 
 
     for (
-        const foodId
-        of triggerFoods
+        const recommendation
+        of recommendations
     ) {
 
         const food =
-            foodMap.get(foodId);
+            foodMap.get(
+                recommendation.foodId
+            );
 
 
         if (!food) {
@@ -476,82 +373,106 @@ export async function getRecommendations(userId) {
         }
 
 
-        const companions =
-            recommendCompanions(
-                food.restaurantId,
-                [foodId],
-                model,
-                K
-            );
+        // -------------------------------------------------
+        // Safety Check
+        //
+        // پیشنهاد باید متعلق به Restaurant فعلی Cart باشد.
+        // -------------------------------------------------
+
+        if (
+            food.restaurantId !==
+            restaurantId
+        ) {
+            continue;
+        }
 
 
-        // Model فعلاً فقط Food ID برمی‌گرداند
-        for (
-            const companionFoodId
-            of companions
+        recommendedForYou.push({
+
+            ...food,
+
+            score:
+                recommendation.score,
+
+            recommendationType:
+                "personal"
+
+        });
+
+
+        if (
+            recommendedForYou.length >= K
+        ) {
+            break;
+        }
+
+    }
+
+
+    console.log(
+        "Personal recommendations:",
+        recommendedForYou.map(
+            food => ({
+                name: food.name,
+                restaurantId:
+                    food.restaurantId
+            })
+        )
+    );
+
+
+    const finalRecommendedForYou =
+        await addFoodStats(
+            recommendedForYou
+        );
+
+
+    // =================================================
+    // 6. Trigger Foods
+    // =================================================
+    //
+    // بسیار مهم:
+    //
+    // Trigger فقط از غذاهای داخل Cart فعلی می‌آید.
+    //
+    // نه از تمام خریدهای قبلی کاربر.
+    // =================================================
+
+    const triggerFoodIds = [];
+
+
+    for (
+        const cartItem
+        of cart.cartItems
+    ) {
+
+        if (!cartItem.food) {
+            continue;
+        }
+
+
+        // -------------------------------------------------
+        // Safety Check
+        //
+        // Food باید متعلق به Restaurant فعلی Cart باشد.
+        // -------------------------------------------------
+
+        if (
+            cartItem.food.restaurantId !==
+            restaurantId
+        ) {
+            continue;
+        }
+
+
+        if (
+            !triggerFoodIds.includes(
+                cartItem.foodId
+            )
         ) {
 
-            const companionFood =
-                foodMap.get(
-                    companionFoodId
-                );
-
-
-            if (!companionFood) {
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // غذای Trigger خودش پیشنهاد نشود
-            // -------------------------------------------------
-
-            if (
-                triggerFoods.includes(
-                    companionFood.id
-                )
-            ) {
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // بررسی مهم:
-            // Companion باید متعلق به همان رستورانی
-            // باشد که Trigger از آن آمده است.
-            // -------------------------------------------------
-
-            if (
-                companionFood.restaurantId !==
-                food.restaurantId
-            ) {
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // جلوگیری از تکرار
-            // -------------------------------------------------
-
-            if (
-                companionMap.has(
-                    companionFood.id
-                )
-            ) {
-                continue;
-            }
-
-
-            companionMap.set(
-                companionFood.id,
-                {
-                    ...companionFood,
-
-                    score: 1,
-
-                    recommendationType:
-                        "companion"
-                }
+            triggerFoodIds.push(
+                cartItem.foodId
             );
 
         }
@@ -559,22 +480,110 @@ export async function getRecommendations(userId) {
     }
 
 
-    // -------------------------------------------------
-    // مرتب‌سازی Companionها
-    // -------------------------------------------------
+    console.log(
+        "Trigger food IDs:",
+        triggerFoodIds
+    );
 
-    let othersAlsoBought = [
-        ...companionMap.values()
-    ]
-        .sort(
-            (a, b) =>
-                b.score - a.score
+
+    // =================================================
+    // 7. Others Also Bought
+    // =================================================
+    //
+    // Model از غذاهای Cart فعلی یاد می‌گیرد
+    // چه غذاهایی در همان Restaurant
+    // معمولاً همراه آنها خریداری شده‌اند.
+    // =================================================
+
+    const companions =
+        recommendCompanions(
+            restaurantId,
+            triggerFoodIds,
+            model,
+            K
+        );
+
+
+    const othersAlsoBought = [];
+
+
+    for (
+        const recommendation
+        of companions
+    ) {
+
+        const food =
+            foodMap.get(
+                recommendation.foodId
+            );
+
+
+        if (!food) {
+            continue;
+        }
+
+
+        // -------------------------------------------------
+        // Food باید متعلق به Restaurant فعلی باشد.
+        // -------------------------------------------------
+
+        if (
+            food.restaurantId !==
+            restaurantId
+        ) {
+            continue;
+        }
+
+
+        // -------------------------------------------------
+        // غذایی که همین الان در Cart است
+        // دوباره پیشنهاد نشود.
+        // -------------------------------------------------
+
+        if (
+            triggerFoodIds.includes(
+                food.id
+            )
+        ) {
+            continue;
+        }
+
+
+        othersAlsoBought.push({
+
+            ...food,
+
+            score:
+                recommendation.score,
+
+            recommendationType:
+                "companion"
+
+        });
+
+
+        if (
+            othersAlsoBought.length >= K
+        ) {
+            break;
+        }
+
+    }
+
+
+    console.log(
+        "Companion recommendations:",
+        othersAlsoBought.map(
+            food => ({
+                name: food.name,
+                restaurantId:
+                    food.restaurantId
+            })
         )
-        .slice(0, K);
+    );
 
 
-    // اضافه کردن Rating و Review Count
-    othersAlsoBought =
+    const finalOthersAlsoBought =
         await addFoodStats(
             othersAlsoBought
         );
@@ -585,8 +594,18 @@ export async function getRecommendations(userId) {
     // =================================================
 
     return {
-        recommendedForYou,
-        othersAlsoBought
+
+        restaurant: {
+            id: cart.restaurant.id,
+            name: cart.restaurant.name
+        },
+
+        recommendedForYou:
+            finalRecommendedForYou,
+
+        othersAlsoBought:
+            finalOthersAlsoBought
+
     };
 
 }

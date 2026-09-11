@@ -1,22 +1,18 @@
-// ========================================
-// FoodStore Recommendation Model
-// Item-Based CF + Basket Co-Purchase
-// ========================================
-
 const K = 5;
 
-// وزن‌های مدل
 const WEIGHTS = {
     PERSONAL: 0.55,
     COPURCHASE: 0.35,
     POPULARITY: 0.10
 };
 
-// ========================================
+
+// =====================================================
 // Helpers
-// ========================================
+// =====================================================
 
 function ensureObject(object, key) {
+
     if (!object[key]) {
         object[key] = {};
     }
@@ -24,41 +20,93 @@ function ensureObject(object, key) {
     return object[key];
 }
 
+
 function increment(object, key, value = 1) {
-    object[key] = (object[key] || 0) + value;
+
+    object[key] =
+        (object[key] || 0) + value;
 }
 
-// ========================================
-// 1. Build model
-// ========================================
+
+// =====================================================
+// Build Model
+// =====================================================
 
 export function buildModel(orders) {
+
     const userRestaurantFoodCounts = {};
+
     const restaurantFoodUsers = {};
+
     const restaurantFoodPairCounts = {};
+
     const restaurantFoodOrderCounts = {};
 
+
     for (const order of orders) {
+
         const {
             userId,
             restaurantId
         } = order;
 
-        const foodIds = [
+
+        // =================================================
+        // فقط Foodهای معتبر همان Restaurant
+        // =================================================
+
+        const validFoodIds = [
             ...new Set(
-                order.orderItems.map(
-                    item => item.foodId
-                )
+
+                order.orderItems
+                    .filter(item => {
+
+                        /*
+                         * Food باید وجود داشته باشد.
+                         */
+
+                        if (!item.food) {
+                            return false;
+                        }
+
+
+                        /*
+                         * مهم‌ترین فیلتر Model:
+                         *
+                         * Food باید واقعاً متعلق
+                         * به Restaurant سفارش باشد.
+                         */
+
+                        return (
+                            item.food.restaurantId ===
+                            restaurantId
+                        );
+
+                    })
+                    .map(
+                        item =>
+                            item.foodId
+                    )
+
             )
         ];
 
-        if (foodIds.length === 0) {
+
+        /*
+         * اگر Order هیچ Food معتبر نداشت،
+         * در Model استفاده نمی‌شود.
+         */
+
+        if (
+            validFoodIds.length === 0
+        ) {
             continue;
         }
 
-        // --------------------------------
-        // User -> Restaurant -> Food
-        // --------------------------------
+
+        // =================================================
+        // User → Restaurant → Food
+        // =================================================
 
         const userRestaurants =
             ensureObject(
@@ -66,19 +114,30 @@ export function buildModel(orders) {
                 userId
             );
 
+
         const userFoods =
             ensureObject(
                 userRestaurants,
                 restaurantId
             );
 
-        for (const foodId of foodIds) {
-            increment(userFoods, foodId);
+
+        for (
+            const foodId
+            of validFoodIds
+        ) {
+
+            increment(
+                userFoods,
+                foodId
+            );
+
         }
 
-        // --------------------------------
-        // Restaurant -> Food -> Users
-        // --------------------------------
+
+        // =================================================
+        // Restaurant → Food → Users
+        // =================================================
 
         const restaurantUsers =
             ensureObject(
@@ -86,19 +145,30 @@ export function buildModel(orders) {
                 restaurantId
             );
 
-        for (const foodId of foodIds) {
+
+        for (
+            const foodId
+            of validFoodIds
+        ) {
+
             const foodUsers =
                 ensureObject(
                     restaurantUsers,
                     foodId
                 );
 
-            increment(foodUsers, userId);
+
+            increment(
+                foodUsers,
+                userId
+            );
+
         }
 
-        // --------------------------------
-        // Popularity
-        // --------------------------------
+
+        // =================================================
+        // Restaurant → Food → Order Count
+        // =================================================
 
         const restaurantPopularity =
             ensureObject(
@@ -106,19 +176,24 @@ export function buildModel(orders) {
                 restaurantId
             );
 
-        for (const foodId of foodIds) {
+
+        for (
+            const foodId
+            of validFoodIds
+        ) {
+
             increment(
                 restaurantPopularity,
                 foodId
             );
+
         }
 
-        // --------------------------------
+
+        // =================================================
+        // Restaurant → Food → Food
         // Co-Purchase
-        //
-        // Every pair appearing in the
-        // same basket gets one signal.
-        // --------------------------------
+        // =================================================
 
         const restaurantPairs =
             ensureObject(
@@ -126,10 +201,16 @@ export function buildModel(orders) {
                 restaurantId
             );
 
-        for (let i = 0; i < foodIds.length; i++) {
+
+        for (
+            let i = 0;
+            i < validFoodIds.length;
+            i++
+        ) {
 
             const foodA =
-                foodIds[i];
+                validFoodIds[i];
+
 
             const foodPairs =
                 ensureObject(
@@ -137,9 +218,10 @@ export function buildModel(orders) {
                     foodA
                 );
 
+
             for (
                 let j = 0;
-                j < foodIds.length;
+                j < validFoodIds.length;
                 j++
             ) {
 
@@ -147,46 +229,78 @@ export function buildModel(orders) {
                     continue;
                 }
 
+
                 const foodB =
-                    foodIds[j];
+                    validFoodIds[j];
+
+
+                /*
+                 * چون validFoodIds از همین
+                 * Restaurant ساخته شده،
+                 * این Pair هم قطعاً متعلق
+                 * به همین Restaurant است.
+                 */
 
                 increment(
                     foodPairs,
                     foodB
                 );
+
             }
+
         }
+
     }
+
+
+    // =====================================================
+    // Build Similarity
+    // =====================================================
 
     const similarityMatrix =
         buildSimilarityMatrix(
             restaurantFoodUsers
         );
 
+
+    // =====================================================
+    // Build Co-Purchase
+    // =====================================================
+
     const coPurchaseMatrix =
         buildCoPurchaseMatrix(
             restaurantFoodPairCounts
         );
 
+
     return {
+
         userRestaurantFoodCounts,
+
         restaurantFoodUsers,
+
         restaurantFoodOrderCounts,
+
         restaurantFoodPairCounts,
+
         similarityMatrix,
+
         coPurchaseMatrix
+
     };
 }
 
-// ========================================
-// 2. Item-Based CF
-// ========================================
+
+// =====================================================
+// Item-Based Similarity
+// =====================================================
 
 function buildSimilarityMatrix(
     restaurantFoodUsers
 ) {
 
     const matrix = {};
+
 
     for (
         const restaurantId
@@ -197,6 +311,7 @@ function buildSimilarityMatrix(
 
         matrix[restaurantId] = {};
 
+
         const foods =
             Object.keys(
                 restaurantFoodUsers[
@@ -204,9 +319,16 @@ function buildSimilarityMatrix(
                 ]
             );
 
-        for (const foodA of foods) {
 
-            matrix[restaurantId][foodA] = {};
+        for (
+            const foodA
+            of foods
+        ) {
+
+            matrix[
+                restaurantId
+            ][foodA] = {};
+
 
             const usersA =
                 new Set(
@@ -217,11 +339,18 @@ function buildSimilarityMatrix(
                     )
                 );
 
-            for (const foodB of foods) {
 
-                if (foodA === foodB) {
+            for (
+                const foodB
+                of foods
+            ) {
+
+                if (
+                    foodA === foodB
+                ) {
                     continue;
                 }
+
 
                 const usersB =
                     new Set(
@@ -232,14 +361,25 @@ function buildSimilarityMatrix(
                         )
                     );
 
+
                 let intersection = 0;
 
-                for (const user of usersA) {
 
-                    if (usersB.has(user)) {
+                for (
+                    const user
+                    of usersA
+                ) {
+
+                    if (
+                        usersB.has(user)
+                    ) {
+
                         intersection++;
+
                     }
+
                 }
+
 
                 const union =
                     new Set([
@@ -247,40 +387,39 @@ function buildSimilarityMatrix(
                         ...usersB
                     ]).size;
 
+
                 const similarity =
                     union > 0
                         ? intersection / union
                         : 0;
 
+
                 matrix[
                     restaurantId
                 ][foodA][foodB] =
                     similarity;
+
             }
+
         }
+
     }
+
 
     return matrix;
 }
 
-// ========================================
-// 3. Co-Purchase normalization
-// ========================================
-//
-// Jaccard-like normalization:
-//
-// pairCount / (ordersContainingA +
-//              ordersContainingB - pairCount)
-//
-// This prevents very popular foods from
-// dominating every recommendation.
-// ========================================
+
+// =====================================================
+// Co-Purchase Matrix
+// =====================================================
 
 function buildCoPurchaseMatrix(
     pairCounts
 ) {
 
     const matrix = {};
+
 
     for (
         const restaurantId
@@ -289,10 +428,12 @@ function buildCoPurchaseMatrix(
 
         matrix[restaurantId] = {};
 
+
         const restaurantPairs =
             pairCounts[
             restaurantId
             ];
+
 
         for (
             const foodA
@@ -305,12 +446,11 @@ function buildCoPurchaseMatrix(
                 restaurantId
             ][foodA] = {};
 
+
             for (
                 const foodB
                 of Object.keys(
-                    restaurantPairs[
-                    foodA
-                    ]
+                    restaurantPairs[foodA]
                 )
             ) {
 
@@ -319,20 +459,26 @@ function buildCoPurchaseMatrix(
                     foodA
                     ][foodB];
 
+
                 matrix[
                     restaurantId
                 ][foodA][foodB] =
                     pairCount;
+
             }
+
         }
+
     }
+
 
     return matrix;
 }
 
-// ========================================
-// 4. Personal score
-// ========================================
+
+// =====================================================
+// Personal Recommendation Score
+// =====================================================
 
 function calculatePersonalScore(
     userId,
@@ -349,7 +495,9 @@ function calculatePersonalScore(
         restaurantId
         ] || {};
 
+
     let score = 0;
+
 
     for (
         const [
@@ -361,12 +509,19 @@ function calculatePersonalScore(
         )
     ) {
 
+        /*
+         * غذایی که قبلاً خریده شده،
+         * برای Personal Recommendation
+         * دوباره به عنوان candidate امتیاز نگیرد.
+         */
+
         if (
             purchasedFoodId ===
             candidateFoodId
         ) {
             continue;
         }
+
 
         const similarity =
             model
@@ -378,22 +533,27 @@ function calculatePersonalScore(
             candidateFoodId
             ] || 0;
 
+
         const purchaseWeight =
             Math.log(
                 1 + purchaseCount
             );
 
+
         score +=
             similarity *
             purchaseWeight;
+
     }
+
 
     return score;
 }
 
-// ========================================
-// 5. Co-Purchase score
-// ========================================
+
+// =====================================================
+// Co-Purchase Score
+// =====================================================
 
 function calculateCoPurchaseScore(
     triggerFoodIds,
@@ -403,6 +563,7 @@ function calculateCoPurchaseScore(
 ) {
 
     let score = 0;
+
 
     for (
         const triggerFoodId
@@ -416,6 +577,7 @@ function calculateCoPurchaseScore(
             continue;
         }
 
+
         const pairCount =
             model
                 .coPurchaseMatrix[
@@ -426,15 +588,19 @@ function calculateCoPurchaseScore(
             candidateFoodId
             ] || 0;
 
+
         score += pairCount;
+
     }
+
 
     return score;
 }
 
-// ========================================
-// 6. Normalize scores
-// ========================================
+
+// =====================================================
+// Normalize Scores
+// =====================================================
 
 function normalizeScores(
     scoredFoods
@@ -446,6 +612,7 @@ function normalizeScores(
         return scoredFoods;
     }
 
+
     const maxPersonal =
         Math.max(
             ...scoredFoods.map(
@@ -453,6 +620,7 @@ function normalizeScores(
                     item.personalScore
             )
         );
+
 
     const maxCoPurchase =
         Math.max(
@@ -462,6 +630,7 @@ function normalizeScores(
             )
         );
 
+
     const maxPopularity =
         Math.max(
             ...scoredFoods.map(
@@ -469,6 +638,7 @@ function normalizeScores(
                     item.popularity
             )
         );
+
 
     return scoredFoods.map(
         item => {
@@ -479,11 +649,13 @@ function normalizeScores(
                     maxPersonal
                     : 0;
 
+
             const coPurchase =
                 maxCoPurchase > 0
                     ? item.coPurchaseScore /
                     maxCoPurchase
                     : 0;
+
 
             const popularity =
                 maxPopularity > 0
@@ -491,20 +663,28 @@ function normalizeScores(
                     maxPopularity
                     : 0;
 
+
             return {
+
                 ...item,
+
                 personal,
+
                 coPurchase,
+
                 popularityNormalized:
                     popularity
+
             };
+
         }
     );
 }
 
-// ========================================
-// 7. Personalized recommendation
-// ========================================
+
+// =====================================================
+// Personalized Recommendation
+// =====================================================
 
 export function recommendForUser(
     userId,
@@ -521,10 +701,16 @@ export function recommendForUser(
         restaurantId
         ] || {};
 
+
     const purchasedFoodIds =
         Object.keys(
             userFoods
         );
+
+
+    // =================================================
+    // Candidateها فقط از همان Restaurant
+    // =================================================
 
     const restaurantFoods =
         model
@@ -532,7 +718,9 @@ export function recommendForUser(
         restaurantId
         ] || {};
 
+
     const scoredFoods = [];
+
 
     for (
         const candidateFoodId
@@ -540,6 +728,20 @@ export function recommendForUser(
             restaurantFoods
         )
     ) {
+
+        /*
+         * غذایی که کاربر قبلاً خریده،
+         * در Recommended For You نشان داده نشود.
+         */
+
+        if (
+            purchasedFoodIds.includes(
+                candidateFoodId
+            )
+        ) {
+            continue;
+        }
+
 
         const personalScore =
             calculatePersonalScore(
@@ -549,6 +751,7 @@ export function recommendForUser(
                 model
             );
 
+
         const coPurchaseScore =
             calculateCoPurchaseScore(
                 purchasedFoodIds,
@@ -557,24 +760,34 @@ export function recommendForUser(
                 model
             );
 
+
         const popularity =
             restaurantFoods[
             candidateFoodId
             ] || 0;
 
+
         scoredFoods.push({
+
             foodId:
                 candidateFoodId,
+
             personalScore,
+
             coPurchaseScore,
+
             popularity
+
         });
+
     }
+
 
     const normalized =
         normalizeScores(
             scoredFoods
         );
+
 
     normalized.sort(
         (a, b) => {
@@ -589,6 +802,7 @@ export function recommendForUser(
                 WEIGHTS.POPULARITY *
                 a.popularityNormalized;
 
+
             const scoreB =
                 WEIGHTS.PERSONAL *
                 b.personal +
@@ -599,30 +813,44 @@ export function recommendForUser(
                 WEIGHTS.POPULARITY *
                 b.popularityNormalized;
 
+
             return scoreB - scoreA;
+
         }
     );
 
+
     return normalized
         .slice(0, limit)
-        .map(
-            item =>
-                item.foodId
-        );
+        .map(item => {
+
+            const score =
+                WEIGHTS.PERSONAL *
+                item.personal +
+
+                WEIGHTS.COPURCHASE *
+                item.coPurchase +
+
+                WEIGHTS.POPULARITY *
+                item.popularityNormalized;
+
+
+            return {
+
+                foodId:
+                    item.foodId,
+
+                score
+
+            };
+
+        });
 }
 
-// ========================================
-// 8. Companion recommendation
-// ========================================
-//
-// Used when the user has selected a food
-// or has items in the cart.
-//
-// IMPORTANT:
-// Previously purchased foods ARE allowed.
-// The goal is "things you may like"
-// and/or "usually ordered together".
-// ========================================
+
+// =====================================================
+// Companion Recommendation
+// =====================================================
 
 export function recommendCompanions(
     restaurantId,
@@ -631,13 +859,19 @@ export function recommendCompanions(
     limit = K
 ) {
 
+    /*
+     * Candidateها فقط از همان Restaurant.
+     */
+
     const restaurantFoods =
         model
             .restaurantFoodOrderCounts[
         restaurantId
         ] || {};
 
+
     const scoredFoods = [];
+
 
     for (
         const candidateFoodId
@@ -645,6 +879,10 @@ export function recommendCompanions(
             restaurantFoods
         )
     ) {
+
+        /*
+         * Trigger خودش پیشنهاد نشود.
+         */
 
         if (
             triggerFoodIds.includes(
@@ -654,6 +892,7 @@ export function recommendCompanions(
             continue;
         }
 
+
         const coPurchaseScore =
             calculateCoPurchaseScore(
                 triggerFoodIds,
@@ -662,36 +901,72 @@ export function recommendCompanions(
                 model
             );
 
+
+        /*
+         * خیلی مهم:
+         *
+         * اگر این غذا هیچ‌وقت همراه هیچ‌کدام
+         * از غذاهای Cart خریداری نشده باشد،
+         * اصلاً Companion محسوب نمی‌شود.
+         */
+
+        if (
+            coPurchaseScore <= 0
+        ) {
+            continue;
+        }
+
+
         const popularity =
             restaurantFoods[
             candidateFoodId
             ] || 0;
 
+
         scoredFoods.push({
+
             foodId:
                 candidateFoodId,
+
             coPurchaseScore,
+
             popularity
+
         });
+
     }
+
+
+    // =================================================
+    // اگر هیچ رابطه Co-Purchase وجود نداشت
+    // =================================================
+
+    if (
+        scoredFoods.length === 0
+    ) {
+
+        return [];
+
+    }
+
 
     const maxCoPurchase =
         Math.max(
-            0,
             ...scoredFoods.map(
                 item =>
                     item.coPurchaseScore
             )
         );
 
+
     const maxPopularity =
         Math.max(
-            0,
             ...scoredFoods.map(
                 item =>
                     item.popularity
             )
         );
+
 
     for (
         const item
@@ -704,11 +979,18 @@ export function recommendCompanions(
                 maxCoPurchase
                 : 0;
 
+
         item.popularityNormalized =
             maxPopularity > 0
                 ? item.popularity /
                 maxPopularity
                 : 0;
+
+
+        /*
+         * Co-Purchase عامل اصلی است.
+         * Popularity فقط tie-break / تقویت جزئی است.
+         */
 
         item.finalScore =
             0.85 *
@@ -716,7 +998,9 @@ export function recommendCompanions(
 
             0.15 *
             item.popularityNormalized;
+
     }
+
 
     scoredFoods.sort(
         (a, b) =>
@@ -724,10 +1008,17 @@ export function recommendCompanions(
             a.finalScore
     );
 
+
     return scoredFoods
         .slice(0, limit)
-        .map(
-            item =>
-                item.foodId
-        );
+        .map(item => ({
+
+            foodId:
+                item.foodId,
+
+            score:
+                item.finalScore
+
+        }));
+
 }
