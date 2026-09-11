@@ -609,3 +609,450 @@ export async function getRecommendations(userId) {
     };
 
 }
+
+
+// =====================================================
+// Restaurant Recommendations
+// =====================================================
+//
+// پیشنهاد ۱۰ غذای یک Restaurant مشخص.
+//
+// اولویت:
+// 1. Personal Recommendation
+// 2. Co-Purchase
+// 3. Restaurant Popularity
+//
+// این تابع به Cart وابسته نیست.
+// =====================================================
+
+export async function getRestaurantRecommendations(
+    userId,
+    restaurantId,
+    limit = 10
+) {
+
+    // =================================================
+    // 1. سفارش‌های تحویل‌شده
+    // =================================================
+
+    const orders =
+        await prisma.order.findMany({
+
+            where: {
+                status: "DELIVERED"
+            },
+
+            select: {
+
+                id: true,
+
+                userId: true,
+
+                restaurantId: true,
+
+                createdAt: true,
+
+                orderItems: {
+
+                    select: {
+
+                        foodId: true,
+
+                        food: {
+                            select: {
+                                restaurantId: true
+                            }
+                        }
+
+                    }
+
+                }
+
+            },
+
+            orderBy: {
+                createdAt: "asc"
+            }
+
+        });
+
+
+    if (orders.length === 0) {
+        return [];
+    }
+
+
+    // =================================================
+    // 2. ساخت Model
+    // =================================================
+
+    const model =
+        buildModel(orders);
+
+
+    const foodMap =
+        await getFoodMap();
+
+
+    // =================================================
+    // 3. غذاهای نامناسب برای Recommendation
+    // =================================================
+
+    const excludedCategoryWords = [
+        "drink",
+        "beverage",
+        "نوشیدنی",
+        "salad",
+        "سالاد"
+    ];
+
+
+    function isMainFood(food) {
+
+        const categoryName =
+            food.categoryName
+                ?.toLowerCase()
+                .trim() || "";
+
+
+        return !excludedCategoryWords.some(
+            word =>
+                categoryName.includes(
+                    word.toLowerCase()
+                )
+        );
+
+    }
+
+
+    // =================================================
+    // 4. Personal Recommendations
+    // =================================================
+
+    const personalRecommendations =
+        recommendForUser(
+            userId,
+            restaurantId,
+            model,
+            limit
+        );
+
+
+    const recommendations = [];
+
+    const addedFoodIds = new Set();
+
+
+    for (
+        const recommendation
+        of personalRecommendations
+    ) {
+
+        const food =
+            foodMap.get(
+                recommendation.foodId
+            );
+
+
+        if (!food) {
+            continue;
+        }
+
+
+        // فقط همین Restaurant
+        if (
+            food.restaurantId !==
+            restaurantId
+        ) {
+            continue;
+        }
+
+
+        // حذف نوشیدنی و سالاد
+        if (!isMainFood(food)) {
+            continue;
+        }
+
+
+        if (
+            addedFoodIds.has(food.id)
+        ) {
+            continue;
+        }
+
+
+        recommendations.push({
+
+            ...food,
+
+            score:
+                recommendation.score,
+
+            recommendationType:
+                "personal"
+
+        });
+
+
+        addedFoodIds.add(
+            food.id
+        );
+
+
+        if (
+            recommendations.length >=
+            limit
+        ) {
+            break;
+        }
+
+    }
+
+
+    // =================================================
+    // 5. Co-Purchase
+    // =================================================
+    //
+    // برای کاربر، غذاهایی که قبلاً در همین
+    // Restaurant خریده شده‌اند به عنوان Trigger
+    // استفاده می‌شوند.
+    // =================================================
+
+    const userRestaurantFoods =
+        model
+            .userRestaurantFoodCounts[
+        userId
+        ]?.[
+        restaurantId
+        ] || {};
+
+
+    const triggerFoodIds =
+        Object.keys(
+            userRestaurantFoods
+        );
+
+
+    if (
+        recommendations.length < limit &&
+        triggerFoodIds.length > 0
+    ) {
+
+        const remaining =
+            limit -
+            recommendations.length;
+
+
+        const companions =
+            recommendCompanions(
+                restaurantId,
+                triggerFoodIds,
+                model,
+                remaining
+            );
+
+
+        for (
+            const recommendation
+            of companions
+        ) {
+
+            const food =
+                foodMap.get(
+                    recommendation.foodId
+                );
+
+
+            if (!food) {
+                continue;
+            }
+
+
+            if (
+                food.restaurantId !==
+                restaurantId
+            ) {
+                continue;
+            }
+
+
+            if (!isMainFood(food)) {
+                continue;
+            }
+
+
+            if (
+                addedFoodIds.has(
+                    food.id
+                )
+            ) {
+                continue;
+            }
+
+
+            recommendations.push({
+
+                ...food,
+
+                score:
+                    recommendation.score,
+
+                recommendationType:
+                    "companion"
+
+            });
+
+
+            addedFoodIds.add(
+                food.id
+            );
+
+
+            if (
+                recommendations.length >=
+                limit
+            ) {
+                break;
+            }
+
+        }
+
+    }
+
+
+    // =================================================
+    // 6. Popularity Fallback
+    // =================================================
+    //
+    // اگر Personal + Co-Purchase کمتر از 10
+    // نتیجه دادند، محبوب‌ترین غذاهای Restaurant
+    // را اضافه می‌کنیم.
+    // =================================================
+
+    if (
+        recommendations.length <
+        limit
+    ) {
+
+        const restaurantPopularity =
+            model
+                .restaurantFoodOrderCounts[
+            restaurantId
+            ] || {};
+
+
+        const popularFoods =
+            Object.entries(
+                restaurantPopularity
+            )
+                .sort(
+                    ([, countA], [, countB]) =>
+                        countB - countA
+                );
+
+
+        for (
+            const [
+                foodId,
+                popularity
+            ]
+            of popularFoods
+        ) {
+
+            if (
+                recommendations.length >=
+                limit
+            ) {
+                break;
+            }
+
+
+            if (
+                addedFoodIds.has(foodId)
+            ) {
+                continue;
+            }
+
+
+            const food =
+                foodMap.get(
+                    foodId
+                );
+
+
+            if (!food) {
+                continue;
+            }
+
+
+            if (
+                food.restaurantId !==
+                restaurantId
+            ) {
+                continue;
+            }
+
+
+            if (!isMainFood(food)) {
+                continue;
+            }
+
+
+            recommendations.push({
+
+                ...food,
+
+                score:
+                    popularity,
+
+                recommendationType:
+                    "popular"
+
+            });
+
+
+            addedFoodIds.add(
+                food.id
+            );
+
+        }
+
+    }
+
+
+    // =================================================
+    // 7. Food Statistics
+    // =================================================
+
+    const finalRecommendations =
+        await addFoodStats(
+            recommendations
+        );
+
+
+    console.log(
+        "Restaurant recommendations:",
+        {
+            userId,
+            restaurantId,
+            count:
+                finalRecommendations.length,
+            recommendations:
+                finalRecommendations.map(
+                    food => ({
+                        name: food.name,
+                        type:
+                            food.recommendationType
+                    })
+                )
+        }
+    );
+
+
+    // =================================================
+    // 8. Result
+    // =================================================
+
+    return finalRecommendations;
+
+}

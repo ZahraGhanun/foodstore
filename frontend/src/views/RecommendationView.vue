@@ -251,13 +251,9 @@ onMounted(() => {
 <style scoped>
 
 .recommendation-page {
-
     max-width: 1200px;
-
     margin: 0 auto;
-
     padding: 40px 30px 60px;
-
 }
 
 
@@ -266,31 +262,20 @@ onMounted(() => {
 ----------------------------- */
 
 .page-header {
-
     margin-bottom: 40px;
-
 }
 
 .page-header h1 {
-
     margin: 0 0 10px;
-
     font-size: 32px;
-
     font-weight: 700;
-
 }
 
 .page-header p {
-
     margin: 0;
-
     max-width: 700px;
-
     color: #666;
-
     line-height: 1.7;
-
 }
 
 
@@ -299,35 +284,23 @@ onMounted(() => {
 ----------------------------- */
 
 .recommendation-section {
-
     margin-bottom: 50px;
-
 }
 
 .section-header {
-
     margin-bottom: 22px;
-
 }
 
 .section-header h2 {
-
     margin: 0 0 7px;
-
     font-size: 23px;
-
     font-weight: 650;
-
 }
 
 .section-header p {
-
     margin: 0;
-
     color: #777;
-
     line-height: 1.6;
-
 }
 
 
@@ -336,17 +309,9 @@ onMounted(() => {
 ----------------------------- */
 
 .foods {
-
     display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(220px, 1fr)
-        );
-
+    grid-template-columns: repeat(4, 280px);
     gap: 24px;
-
 }
 
 
@@ -355,45 +320,28 @@ onMounted(() => {
 ----------------------------- */
 
 .state-message {
-
     display: flex;
-
     flex-direction: column;
-
     align-items: center;
-
     justify-content: center;
-
     min-height: 250px;
-
     padding: 30px;
-
     text-align: center;
-
     color: #666;
-
 }
 
 .state-message h2 {
-
     margin-bottom: 8px;
-
     color: #333;
-
 }
 
 .state-message p {
-
     margin: 0;
-
     line-height: 1.6;
-
 }
 
 .error-message {
-
     color: #c0392b;
-
 }
 
 
@@ -402,31 +350,19 @@ onMounted(() => {
 ----------------------------- */
 
 .loader {
-
     width: 38px;
-
     height: 38px;
-
     margin-bottom: 15px;
-
     border: 4px solid #eee;
-
     border-top-color: #333;
-
     border-radius: 50%;
-
     animation: spin 0.8s linear infinite;
-
 }
 
 @keyframes spin {
-
     to {
-
         transform: rotate(360deg);
-
     }
-
 }
 
 
@@ -435,35 +371,22 @@ onMounted(() => {
 ----------------------------- */
 
 .retry-button {
-
     margin-top: 18px;
-
     padding: 10px 20px;
-
     border: none;
-
     border-radius: 8px;
-
     background: #222;
-
     color: white;
-
     font-size: 14px;
-
     cursor: pointer;
-
     transition:
         opacity 0.2s ease,
         transform 0.2s ease;
-
 }
 
 .retry-button:hover {
-
     opacity: 0.85;
-
     transform: translateY(-1px);
-
 }
 
 
@@ -471,36 +394,40 @@ onMounted(() => {
    Responsive
 ----------------------------- */
 
+@media (max-width: 1250px) {
+
+    .foods {
+        grid-template-columns: repeat(3, 280px);
+    }
+
+}
+
+
+@media (max-width: 950px) {
+
+    .foods {
+        grid-template-columns: repeat(2, 280px);
+    }
+
+}
+
+
 @media (max-width: 600px) {
 
     .recommendation-page {
-
         padding: 25px 16px 40px;
-
     }
 
     .page-header h1 {
-
         font-size: 27px;
-
     }
 
     .section-header h2 {
-
         font-size: 21px;
-
     }
 
     .foods {
-
-        grid-template-columns:
-            repeat(
-                auto-fill,
-                minmax(160px, 1fr)
-            );
-
-        gap: 16px;
-
+        grid-template-columns: 1fr;
     }
 
 }
