@@ -718,7 +718,6 @@ export function recommendForUser(
         restaurantId
         ] || {};
 
-
     const scoredFoods = [];
 
 
@@ -868,7 +867,6 @@ export function recommendCompanions(
             .restaurantFoodOrderCounts[
         restaurantId
         ] || {};
-
 
     const scoredFoods = [];
 
