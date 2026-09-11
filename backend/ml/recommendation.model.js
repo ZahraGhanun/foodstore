@@ -510,18 +510,43 @@ function calculatePersonalScore(
     ) {
 
         /*
-         * غذایی که قبلاً خریده شده،
-         * برای Personal Recommendation
-         * دوباره به عنوان candidate امتیاز نگیرد.
+         * =================================================
+         * 1. خرید تکراری خودِ غذا
+         * =================================================
+         *
+         * اگر کاربر قبلاً همین غذا را خریده باشد،
+         * این یک سیگنال مستقیم از علاقه‌ی کاربر است.
+         *
+         * هرچه تعداد خرید بیشتر باشد،
+         * امتیاز بیشتر می‌شود.
+         *
+         * از log استفاده می‌کنیم تا مثلاً خرید 20 باره
+         * بیش از حد مدل را تحت تأثیر قرار ندهد.
          */
 
         if (
             purchasedFoodId ===
             candidateFoodId
         ) {
+
+            score +=
+                Math.log(
+                    1 + purchaseCount
+                );
+
             continue;
         }
 
+
+        /*
+         * =================================================
+         * 2. شباهت به غذاهای قبلی کاربر
+         * =================================================
+         *
+         * اگر غذا هنوز خریداری نشده باشد،
+         * شباهت آن با غذاهایی که کاربر قبلاً خریده
+         * تعیین می‌کند که چقدر به سلیقه‌ی او نزدیک است.
+         */
 
         const similarity =
             model
@@ -533,6 +558,12 @@ function calculatePersonalScore(
             candidateFoodId
             ] || 0;
 
+
+        /*
+         * خرید بیشتر یک غذای قبلی،
+         * اهمیت آن غذا را برای تشخیص سلیقه‌ی کاربر
+         * بیشتر می‌کند.
+         */
 
         const purchaseWeight =
             Math.log(
@@ -728,19 +759,6 @@ export function recommendForUser(
         )
     ) {
 
-        /*
-         * غذایی که کاربر قبلاً خریده،
-         * در Recommended For You نشان داده نشود.
-         */
-
-        if (
-            purchasedFoodIds.includes(
-                candidateFoodId
-            )
-        ) {
-            continue;
-        }
-
 
         const personalScore =
             calculatePersonalScore(
@@ -778,6 +796,19 @@ export function recommendForUser(
             popularity
 
         });
+
+
+        console.log(
+            "PERSONAL SCORE:",
+            {
+                foodId: candidateFoodId,
+                purchaseCount:
+                    userFoods[candidateFoodId] || 0,
+                personalScore,
+                coPurchaseScore,
+                popularity
+            }
+        );
 
     }
 
